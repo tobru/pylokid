@@ -14,7 +14,7 @@
 
 ## Todo
 
-* Move processed mail to subfolder
+* Parse PDF
 * Lodur Connect (Create Einsatzrapport)
 * IMAP idle
 * Error Handling

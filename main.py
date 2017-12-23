@@ -16,13 +16,14 @@ import aioeasywebdav
 from dotenv import load_dotenv, find_dotenv
 import paho.mqtt.client as mqtt
 
-_EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll")'
+_EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" UNSEEN)'
 
 load_dotenv(find_dotenv())
 imap_server = os.getenv("IMAP_SERVER")
 imap_username = os.getenv("IMAP_USERNAME")
 imap_password = os.getenv("IMAP_PASSWORD")
 imap_mailbox = os.getenv("IMAP_MAILBOX", "INBOX")
+imap_mailbox_archive = os.getenv("IMAP_MAILBOX_ARCHIVE", "Archive")
 webdav_url = os.getenv("WEBDAV_URL")
 webdav_username = os.getenv("WEBDAV_USERNAME")
 webdav_password = os.getenv("WEBDAV_PASSWORD")
@@ -43,7 +44,7 @@ def get_attachments(mqtt_client):
     logger.info('Connecting to IMAP server ' + imap_server)
     imap = imaplib.IMAP4_SSL(imap_server)
     imap.login(imap_username, imap_password)
-    imap.select(imap_mailbox, readonly=True)
+    imap.select(imap_mailbox, readonly=False)
 
     # search for matching messages
     logger.info('Searching for messages matching the subject')
@@ -54,6 +55,8 @@ def get_attachments(mqtt_client):
     if typ != 'OK':
         print('Error searching for matching messages')
         raise
+
+    logger.info('Found ' + str(len(msg_ids[0].split())) + ' matching messages')
 
     for msg_id in msg_ids[0].split():
         subject = str()
@@ -73,6 +76,9 @@ def get_attachments(mqtt_client):
         logger.info('Detected F ID: ' + f_id)
 
         mqtt_client.publish("pylokid/einsatz/" + f_id, subject)
+
+        # Mark as seen
+        imap.store(msg_id, '+FLAGS', '(\\Seen)')
 
         # extract attachment from body
         mail = email.message_from_string(str(msg_data[0][1],'utf-8'))
