@@ -107,12 +107,20 @@ def upload_attachment(file, file_name, f_id):
     # upload with webdav
     upload_dir = webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
     logger.info('Uploading attachment to ' + upload_dir)
+
+    # create directory if not yet there
     if not loop.run_until_complete(webdav.exists(upload_dir)):
+        logger.info('Creating directory ' + upload_dir)
         loop.run_until_complete(webdav.mkdir(upload_dir))
 
-    loop.run_until_complete(
-        webdav.upload(file, upload_dir + "/" + file_name)
-    )
+    remote_file_path = upload_dir + "/" + file_name
+    if loop.run_until_complete(webdav.exists(remote_file_path)):
+        logger.info('File ' + file_name + ' already uploaded')
+    else:
+        loop.run_until_complete(
+            webdav.upload(file, remote_file_path)
+        )
+        logger.info('File ' + file_name + ' uploaded')
 
 def main():
     """ main """

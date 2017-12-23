@@ -18,3 +18,4 @@
 * IMAP idle
 * Lodur Connect (Create Einsatzrapport)
 * MQTT Publish
+* Error Handling
