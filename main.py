@@ -14,6 +14,7 @@ import imaplib
 from datetime import datetime
 import aioeasywebdav
 from dotenv import load_dotenv, find_dotenv
+import paho.mqtt.client as mqtt
 
 _EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll")'
 
@@ -27,6 +28,9 @@ webdav_username = os.getenv("WEBDAV_USERNAME")
 webdav_password = os.getenv("WEBDAV_PASSWORD")
 webdav_basedir = os.getenv("WEBDAV_BASEDIR")
 tmp_dir = os.getenv("TMP_DIR", "/tmp")
+mqtt_server = os.getenv("MQTT_SERVER")
+mqtt_user = os.getenv("MQTT_USER")
+mqtt_password = os.getenv("MQTT_PASSWORD")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,7 +38,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def get_attachments():
+def get_attachments(mqtt_client):
     # imap connection
     logger.info('Connecting to IMAP server ' + imap_server)
     imap = imaplib.IMAP4_SSL(imap_server)
@@ -67,6 +71,8 @@ def get_attachments():
 
         logger.info('Processing message: ' + subject)
         logger.info('Detected F ID: ' + f_id)
+
+        mqtt_client.publish("pylokid/einsatz/" + f_id, subject)
 
         # extract attachment from body
         mail = email.message_from_string(str(msg_data[0][1],'utf-8'))
@@ -122,13 +128,24 @@ def upload_attachment(file, file_name, f_id):
         )
         logger.info('File ' + file_name + ' uploaded')
 
+def on_connect(client, userdata, flags, rc):
+    logger.info('Connected to MQTT with result code ' + str(rc))
+
 def main():
     """ main """
 
+    logger.info('Connecting to MQTT broker ' + mqtt_server)
+
+    client = mqtt.Client('pylokid')
+    client.on_connect = on_connect
+    client.username_pw_set(mqtt_user, password=mqtt_password)
+    client.tls_set()
+    client.connect(mqtt_server, 8883, 60)
+    client.loop_start()
+
     while True:
-        get_attachments()
+        get_attachments(client)
         time.sleep(60)
 
 if __name__ == '__main__':
     main()
-    

@@ -14,8 +14,7 @@
 
 ## Todo
 
-* Move processes mail to subfolder
-* IMAP idle
+* Move processed mail to subfolder
 * Lodur Connect (Create Einsatzrapport)
-* MQTT Publish
+* IMAP idle
 * Error Handling
