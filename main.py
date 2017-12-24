@@ -4,17 +4,17 @@
 
 import os
 import re
-import datetime
+from datetime import datetime
 import asyncio
 import logging
 import time
 import email
 import email.parser
 import imaplib
-from datetime import datetime
 import aioeasywebdav
 from dotenv import load_dotenv, find_dotenv
 import paho.mqtt.client as mqtt
+from lodur_connect import create_einsatzrapport, upload_alarmdepesche
 
 _EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" UNSEEN)'
 
@@ -32,6 +32,9 @@ tmp_dir = os.getenv("TMP_DIR", "/tmp")
 mqtt_server = os.getenv("MQTT_SERVER")
 mqtt_user = os.getenv("MQTT_USER")
 mqtt_password = os.getenv("MQTT_PASSWORD")
+lodur_user = os.getenv("LODUR_USER")
+lodur_password = os.getenv("LODUR_PASSWORD")
+lodur_base_url = os.getenv("LODUR_BASE_URL")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -53,7 +56,7 @@ def get_attachments(mqtt_client):
         _EMAIL_SUBJECTS,
     )
     if typ != 'OK':
-        print('Error searching for matching messages')
+        logger.error('Error searching for matching messages')
         raise
 
     logger.info('Found ' + str(len(msg_ids[0].split())) + ' matching messages')
@@ -61,27 +64,48 @@ def get_attachments(mqtt_client):
     for msg_id in msg_ids[0].split():
         subject = str()
         f_id = str()
+        f_type = str()
 
         # download message
         typ, msg_data = imap.fetch(msg_id, '(RFC822)')
 
         for response_part in msg_data:
             if isinstance(response_part, tuple):
-                msg = email.message_from_string(str(response_part[1],'utf-8'))
+                msg = email.message_from_string(str(response_part[1], 'utf-8'))
                 subject = msg["subject"]
                 # extract F id from subject
-                f_id = re.search('.*: (F[0-9].*)',subject).group(1)
+                parse_subject = re.search('(.*): (F[0-9].*)', subject)
+                f_type = parse_subject.group(1)
+                f_id = parse_subject.group(2)
 
-        logger.info('Processing message: ' + subject)
-        logger.info('Detected F ID: ' + f_id)
-
-        mqtt_client.publish("pylokid/einsatz/" + f_id, subject)
-
-        # Mark as seen
+        # mark as seen
         imap.store(msg_id, '+FLAGS', '(\\Seen)')
 
+        logger.info('Processing message: ' + subject)
+        logger.info('Detected type: ' + f_type)
+        logger.info('Detected F ID: ' + f_id)
+
+        # publish over MQTT
+        mqtt_client.publish("pylokid/einsatz/" + f_id, f_type)
+
+        # Talk to Lodur
+        if f_type == 'Einsatzausdruck_FW':
+            # create new Einsatzrapport in Lodur
+            logger.info('Sending data to Lodur')
+            lodur_id = create_einsatzrapport(
+                lodur_user,
+                lodur_password,
+                lodur_base_url,
+                f_id,
+            )
+            logger.info('Sent data to Lodur. Assigned Lodur ID: ' + lodur_id)
+        elif f_type == 'Einsatzprotokoll':
+            logger.info('Updating data in Lodur')
+        else:
+            logger.error('Unknown type: ' + f_type)
+
         # extract attachment from body
-        mail = email.message_from_string(str(msg_data[0][1],'utf-8'))
+        mail = email.message_from_string(str(msg_data[0][1], 'utf-8'))
 
         for part in mail.walk():
             if part.get_content_maintype() == 'multipart':
@@ -98,12 +122,21 @@ def get_attachments(mqtt_client):
 
                 logger.info('Saving attachment to ' + file_path)
                 if not os.path.isfile(file_path):
-                    print(file_name)
                     file = open(file_path, 'wb')
                     file.write(part.get_payload(decode=True))
                     file.close()
 
                 upload_attachment(file_path, file_name, f_id)
+
+                logger.info('Uploading PDF to Lodur')
+                upload_alarmdepesche(
+                    lodur_user,
+                    lodur_password,
+                    lodur_base_url,
+                    lodur_id,
+                    file_name,
+                    file_path,
+                )
 
 
 def upload_attachment(file, file_name, f_id):
