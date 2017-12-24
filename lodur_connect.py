@@ -4,9 +4,6 @@ import re
 from datetime import datetime
 import requests
 
-import logging
-import http.client
-
 def create_einsatzrapport(username, password, base_url, f_id):
 
     session = requests.session()
@@ -77,13 +74,6 @@ def create_einsatzrapport(username, password, base_url, f_id):
     return lodur_id
 
 def upload_alarmdepesche(username, password, base_url, lodur_id, file_name, file_path):
-    http.client.HTTPConnection.debuglevel = 1
-
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
-    requests_log = logging.getLogger("requests.packages.urllib3")
-    requests_log.setLevel(logging.DEBUG)
-    requests_log.propagate = True
     session = requests.session()
     login_data = {
         'login_member_name': username,
