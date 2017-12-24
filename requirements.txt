@@ -1,3 +1,4 @@
 aioeasywebdav
 python-dotenv
 paho-mqtt
+requests
