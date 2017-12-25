@@ -16,9 +16,10 @@
 
 ### Version 1
 
+* Use WebDAV as "DB" to f.e. check if Einsatz already known
 * Lodur Connect
   * Fill in Einsatzprotokoll data
-  * Store tuple F_ID <-> LODUR_ID persistently
+  * Store tuple F_ID <-> LODUR_ID persistently in WebDAV
 * Error Handling
 * Parse PDF
   * Store parsed data in Lodur text fields for copy/paste
