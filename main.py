@@ -16,9 +16,8 @@ from dotenv import load_dotenv, find_dotenv
 import paho.mqtt.client as mqtt
 from lodur_connect import create_einsatzrapport, upload_alarmdepesche
 
-#_EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" UNSEEN)'
-_EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll")'
-_INTERVAL = 60
+_EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" UNSEEN)'
+_INTERVAL = 10
 
 load_dotenv(find_dotenv())
 imap_server = os.getenv("IMAP_SERVER")
@@ -67,37 +66,36 @@ def store_attachments(imap, msg_ids):
         # download message from imap
         typ, msg_data = imap.fetch(msg_id, '(RFC822)')
 
-        # get subject
-        subject = str()
+        if typ != 'OK':
+            logger.error('Error fetching message')
+            raise
+
+        # extract attachment
         for response_part in msg_data:
             if isinstance(response_part, tuple):
-                msg = email.message_from_string(str(response_part[1], 'utf-8'))
-                subject = msg["subject"]
+                mail = email.message_from_string(str(response_part[1], 'utf-8'))
+                subject = mail['subject']
+                logger.info('Getting attachment from: ' + subject)
+                for part in mail.walk():
+                    if part.get_content_maintype() == 'multipart':
+                        continue
+                    if part.get('Content-Disposition') is None:
+                        continue
+                    file_name = part.get_filename()
 
-        logger.info('Getting attachment from: ' + subject)
-        # extract attachment from body
-        mail = email.message_from_string(str(msg_data[0][1], 'utf-8'))
+                    logger.info('Extracting attachment: ' + file_name)
 
-        for part in mail.walk():
-            if part.get_content_maintype() == 'multipart':
-                continue
-            if part.get('Content-Disposition') is None:
-                continue
-            file_name = part.get_filename()
+                    if bool(file_name):
+                        # save attachment to filesystem
+                        file_path = os.path.join(tmp_dir, file_name)
 
-            logger.info('Extracting attachment: ' + file_name)
+                        logger.info('Saving attachment to ' + file_path)
+                        if not os.path.isfile(file_path):
+                            file = open(file_path, 'wb')
+                            file.write(part.get_payload(decode=True))
+                            file.close()
 
-            if bool(file_name):
-                # save attachment to filesystem
-                file_path = os.path.join(tmp_dir, file_name)
-
-                logger.info('Saving attachment to ' + file_path)
-                if not os.path.isfile(file_path):
-                    file = open(file_path, 'wb')
-                    file.write(part.get_payload(decode=True))
-                    file.close()
-
-                data[subject] = file_name
+                        data[subject] = file_name
 
         # mark as seen
         imap.store(msg_id, '+FLAGS', '(\\Seen)')
@@ -108,7 +106,7 @@ def upload_webdav(loop, webdav, file_name, f_id):
     """ uploads a file to webdav - checks for existence before doing so """
     # upload with webdav
     remote_upload_dir = webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
-    logger.info('Uploading attachment to WebDAV:' + remote_upload_dir)
+    logger.info('Uploading file to WebDAV:' + remote_upload_dir)
 
     # create directory if not yet there
     if not loop.run_until_complete(webdav.exists(remote_upload_dir)):
@@ -140,20 +138,53 @@ def parse_subject(subject):
     f_id = parsed.group(2)
     return f_type, f_id
 
-def on_connect(client, userdata, flags, rc):
-    logger.info('Connected to MQTT with result code ' + str(rc))
+def store_lodur_id(loop, webdav, lodur_id, f_id):
+    """ stores assigned lodur_id on webdav """
+    file_name = f_id + '_lodurid.txt'
+    file_path = os.path.join(tmp_dir, file_name)
+    if not os.path.isfile(file_path):
+        file = open(file_path, 'w')
+        file.write(str(lodur_id))
+        file.close()
+        logger.info('Stored Lodur ID locally in: ' + file_path)
+        upload_webdav(loop, webdav, file_name, f_id)
+    else:
+        logger.info('Lodur ID already available locally in: ' + file_path)
+
+def get_lodur_id(loop, webdav, f_id):
+    """ gets lodur_id if it exists """
+    file_name = f_id + '_lodurid.txt'
+    file_path = os.path.join(tmp_dir, file_name)
+
+    # first check if we already have it locally - then check on webdav
+    if os.path.isfile(file_path):
+        with open(file_path, 'r') as content:
+            lodur_id = content.read()
+            logger.info('Found Lodur ID for ' + f_id + ' locally: ' + lodur_id)
+            return lodur_id
+    else:
+        remote_upload_dir = webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
+        remote_file_path = remote_upload_dir + '/' + file_name
+        if loop.run_until_complete(webdav.exists(remote_file_path)):
+            loop.run_until_complete(webdav.download(remote_file_path, file_path))
+            with open(file_path, 'r') as content:
+                lodur_id = content.read()
+                logger.info('Found Lodur ID for ' + f_id + ' on WebDAV: ' + lodur_id)
+                return lodur_id
+        else:
+            logger.info('No Lodur ID found for ' + f_id)
+            return False
 
 def main():
     """ main """
 
     # MQTT connection
-    #logger.info('Connecting to MQTT broker ' + mqtt_server)
-    #client = mqtt.Client('pylokid')
-    #client.on_connect = on_connect
-    #client.username_pw_set(mqtt_user, password=mqtt_password)
-    #client.tls_set()
-    #client.connect(mqtt_server, 8883, 60)
-    #client.loop_start()
+    logger.info('Connecting to MQTT broker ' + mqtt_server)
+    mqtt_client = mqtt.Client('pylokid')
+    mqtt_client.username_pw_set(mqtt_user, password=mqtt_password)
+    mqtt_client.tls_set()
+    mqtt_client.connect(mqtt_server, 8883, 60)
+    mqtt_client.loop_start()
 
     # imap connection
     logger.info('Connecting to IMAP server ' + imap_server)
@@ -184,27 +215,55 @@ def main():
 
                 # Take actions - depending on the type
                 if f_type == 'Einsatzausdruck_FW':
-                    #mqtt_client.publish("pylokid/einsatz/" + f_id, f_type)
-                    # create new Einsatzrapport in Lodur
-                    logger.info('Creating Einsatzrapport in Lodur for ' + f_id)
-                    lodur_id = create_einsatzrapport(
-                        lodur_user,
-                        lodur_password,
-                        lodur_base_url,
-                        f_id,
-                    )
-                    logger.info('Sent data to Lodur. Assigned Lodur ID: ' + lodur_id)
-                    logger.info('Uploading PDF for ' + f_id + ' to Lodur Einsatzrapport ' + lodur_id)
-                    upload_alarmdepesche(
-                        lodur_user,
-                        lodur_password,
-                        lodur_base_url,
-                        lodur_id,
-                        file_name,
-                        os.path.join(tmp_dir, file_name),
-                    )
+                    lodur_id = get_lodur_id(loop, webdav, f_id)
+                    if lodur_id:
+                        logger.info(
+                            'Einsatzrapport ' + f_id + ' already created in Lodur: ' + lodur_id
+                        )
+                    else:
+                        # this is real - publish Einsatz on MQTT
+                        mqtt_client.publish('pylokid/' + f_type, f_id)
+
+                        # create new Einsatzrapport in Lodur
+                        logger.info('Creating Einsatzrapport in Lodur for ' + f_id)
+                        lodur_id = create_einsatzrapport(
+                            lodur_user,
+                            lodur_password,
+                            lodur_base_url,
+                            f_id,
+                        )
+                        logger.info('Sent data to Lodur. Assigned Lodur ID: ' + lodur_id)
+                        # store lodur id in webdav
+                        store_lodur_id(loop, webdav, lodur_id, f_id)
+
+                        logger.info(
+                            'Uploading PDF for ' + f_id + ' to Lodur Einsatzrapport ' + lodur_id
+                        )
+                        upload_alarmdepesche(
+                            lodur_user,
+                            lodur_password,
+                            lodur_base_url,
+                            lodur_id,
+                            file_name,
+                            os.path.join(tmp_dir, file_name),
+                        )
                 elif f_type == 'Einsatzprotokoll':
-                    logger.info('Updating data in Lodur')
+                    # Einsatz finished - publish on MQTT
+                    mqtt_client.publish('pylokid/' + f_type, f_id)
+
+                    lodur_id = get_lodur_id(loop, webdav, f_id)
+                    if lodur_id:
+                        logger.info('Uploading Einsatzprotokoll to Lodur')
+                        upload_alarmdepesche(
+                            lodur_user,
+                            lodur_password,
+                            lodur_base_url,
+                            lodur_id,
+                            file_name,
+                            os.path.join(tmp_dir, file_name),
+                        )
+                    else:
+                        logger.error('Cannot process Einsatzprotokoll as there is no Lodur ID')
                 else:
                     logger.error('Unknown type: ' + f_type)
 

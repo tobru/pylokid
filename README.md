@@ -16,15 +16,17 @@
 
 ### Version 1
 
-* Use WebDAV as "DB" to f.e. check if Einsatz already known
 * Lodur Connect
   * Fill in Einsatzprotokoll data
-  * Store tuple F_ID <-> LODUR_ID persistently in WebDAV
-* Error Handling
+* Much more error handling
 * Parse PDF
   * Store parsed data in Lodur text fields for copy/paste
 * Cleanup code into proper functions and classes
   * Lodur "API" class
+
+### Known instabilities
+
+* Storing files with "current year" doesn't work well during end of year
 
 ### Future versions
 
