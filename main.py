@@ -8,6 +8,7 @@ from datetime import datetime
 import asyncio
 import logging
 import time
+import requests
 import email
 import email.parser
 import imaplib
@@ -36,6 +37,7 @@ mqtt_password = os.getenv("MQTT_PASSWORD")
 lodur_user = os.getenv("LODUR_USER")
 lodur_password = os.getenv("LODUR_PASSWORD")
 lodur_base_url = os.getenv("LODUR_BASE_URL")
+heartbeat_url = os.getenv("HEARTBEAT_URL")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -275,6 +277,8 @@ def main():
                 else:
                     logger.error('Unknown type: ' + f_type)
 
+        # send heartbeat
+        requests.get(heartbeat_url)
         # repeat every
         time.sleep(_INTERVAL)
 
