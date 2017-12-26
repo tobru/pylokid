@@ -23,6 +23,7 @@
   * Store parsed data in Lodur text fields for copy/paste
 * Cleanup code into proper functions and classes
   * Lodur "API" class
+* Heartbeat
 
 ### Known instabilities
 

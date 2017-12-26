@@ -77,11 +77,10 @@ def store_attachments(imap, msg_ids):
                 subject = mail['subject']
                 logger.info('Getting attachment from: ' + subject)
                 for part in mail.walk():
-                    if part.get_content_maintype() == 'multipart':
-                        continue
-                    if part.get('Content-Disposition') is None:
-                        continue
                     file_name = part.get_filename()
+                    if not file_name:
+                        logger.debug('Most probably not an attachment as no filename found')
+                        continue
 
                     logger.info('Extracting attachment: ' + file_name)
 
@@ -219,6 +218,15 @@ def main():
                     if lodur_id:
                         logger.info(
                             'Einsatzrapport ' + f_id + ' already created in Lodur: ' + lodur_id
+                        )
+                        # Upload Alarmdepesche as it could contain more information than the first one
+                        upload_alarmdepesche(
+                            lodur_user,
+                            lodur_password,
+                            lodur_base_url,
+                            lodur_id,
+                            file_name,
+                            os.path.join(tmp_dir, file_name),
                         )
                     else:
                         # this is real - publish Einsatz on MQTT
