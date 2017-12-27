@@ -25,7 +25,7 @@ def create_einsatzrapport(username, password, base_url, f_id):
     )
 
     data = {
-        'e_r_num': (None, '1'), # 01. Einsatzrapportnummer
+        'e_r_num': (None, f_id), # 01. Einsatzrapportnummer
         'eins_stat_kantone': (None, '1'), # 02. Einsatzart FKS
         'emergency_concept_id': (None, '2'), # 03. Verrechnungsart
         'ver_sart': (None, 'ab'), # 03. Verrechnungsart internal: ab, th, uh, ak, tt

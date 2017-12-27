@@ -87,8 +87,10 @@ def store_attachments(imap, msg_ids):
                     logger.info('Extracting attachment: ' + file_name)
 
                     if bool(file_name):
+                        f_type, f_id = parse_subject(subject)
+                        renamed_file_name = f_type + '_' + file_name
                         # save attachment to filesystem
-                        file_path = os.path.join(tmp_dir, file_name)
+                        file_path = os.path.join(tmp_dir, renamed_file_name)
 
                         logger.info('Saving attachment to ' + file_path)
                         if not os.path.isfile(file_path):
@@ -96,7 +98,7 @@ def store_attachments(imap, msg_ids):
                             file.write(part.get_payload(decode=True))
                             file.close()
 
-                        data[subject] = file_name
+                        data[subject] = renamed_file_name
 
         # mark as seen
         imap.store(msg_id, '+FLAGS', '(\\Seen)')

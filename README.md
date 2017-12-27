@@ -1,6 +1,10 @@
-# Lodur Einsatzapp
+# From Mail to Lodur - all automated
 
 "Loki - Nordischer Gott des Feuers"
+
+This app helps a Feuerwehr Fourier from the Canton of Zurich
+in Switzerland to ease the pain of the huge work for getting
+Einsätze correctly into [Lodur](https://www.lodur.ch/lodur.html).
 
 ## Idea
 
@@ -16,13 +20,16 @@
 
 ### Version 1
 
-* Lodur Connect
-  * Fill in Einsatzprotokoll data
 * Much more error handling
 * Parse PDF
   * Store parsed data in Lodur text fields for copy/paste
 * Cleanup code into proper functions and classes
   * Lodur "API" class
+* Proper exit
+* Healthchecks for Kubernetes probes
+
+Before version 1 can be tagged, it must have processed at least 5 real
+Einsätze!
 
 ### Known instabilities
 
@@ -37,7 +44,7 @@
 * Webapp to see what's going on
 * Get as many data out of the PDFs as possible
 * Simple webform to fill-in missing data (skipping Lodur completely)
-  * Webapp for chosing who was there during the Einsatz
+  * Webapp for chosing who was there during the Einsatz (tablet ready)
 
 ## Lodur Information Gathering
 
