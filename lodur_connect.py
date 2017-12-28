@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 import requests
 
-def create_einsatzrapport(username, password, base_url, f_id):
+def create_einsatzrapport(username, password, base_url, f_id, pdf_data):
 
     session = requests.session()
     login_data = {
@@ -40,7 +40,7 @@ def create_einsatzrapport(username, password, base_url, f_id):
         'ztb_h': (None, '12'), # 05. Zeit bis
         'ztb_m': (None, '12'), # 05. Zeit bis
         'e_ort_1': (None, '306'), # 06. Einsatzort: Urdorf 306, Birmensdorf 298
-        'eins_ereig': (None, f_id), # 07. Ereignis
+        'eins_ereig': (None, pdf_data['einsatz']), # 07. Ereignis # TODO utf-8?
         'adr': (None, 'TBD'), # 08. Adresse
         #'zh_alarmierung_h': (None, 'UNKNOWN'), # 12. Alarmierung
         #'zh_alarmierung_m': (None, 'UNKNOWN'), # 12. Alarmierung

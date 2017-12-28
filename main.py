@@ -16,6 +16,7 @@ import aioeasywebdav
 from dotenv import load_dotenv, find_dotenv
 import paho.mqtt.client as mqtt
 from lodur_connect import create_einsatzrapport, upload_alarmdepesche
+import pdf_extract
 
 _EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" UNSEEN)'
 _INTERVAL = 10
@@ -236,6 +237,9 @@ def main():
                         # this is real - publish Einsatz on MQTT
                         mqtt_client.publish('pylokid/' + f_type, f_id)
 
+                        # get as many information from PDF as possible
+                        pdf_data = pdf_extract.get_einsatzausdruck(os.path.join(tmp_dir, file_name))
+
                         # create new Einsatzrapport in Lodur
                         logger.info('Creating Einsatzrapport in Lodur for ' + f_id)
                         lodur_id = create_einsatzrapport(
@@ -243,6 +247,7 @@ def main():
                             lodur_password,
                             lodur_base_url,
                             f_id,
+                            pdf_data,
                         )
                         logger.info('Sent data to Lodur. Assigned Lodur ID: ' + lodur_id)
                         # store lodur id in webdav
