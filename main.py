@@ -15,7 +15,7 @@ import imaplib
 import aioeasywebdav
 from dotenv import load_dotenv, find_dotenv
 import paho.mqtt.client as mqtt
-from lodur_connect import create_einsatzrapport, upload_alarmdepesche
+from lodur_connect import create_einsatzrapport, upload_alarmdepesche, update_einsatzrapport
 import pdf_extract
 
 _EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" UNSEEN)'
@@ -235,10 +235,14 @@ def main():
                         )
                     else:
                         # this is real - publish Einsatz on MQTT
+                        # TODO publish more information about the einsatz - coming from the PDF
                         mqtt_client.publish('pylokid/' + f_type, f_id)
 
                         # get as many information from PDF as possible
-                        pdf_data = pdf_extract.get_einsatzausdruck(os.path.join(tmp_dir, file_name))
+                        pdf_data = pdf_extract.extract_einsatzausdruck(
+                            os.path.join(tmp_dir, file_name),
+                            f_id,
+                        )
 
                         # create new Einsatzrapport in Lodur
                         logger.info('Creating Einsatzrapport in Lodur for ' + f_id)
@@ -279,6 +283,15 @@ def main():
                             file_name,
                             os.path.join(tmp_dir, file_name),
                         )
+                        pdf_data = pdf_extract.extract_einsatzprotokoll(
+                            os.path.join(tmp_dir, file_name),
+                            f_id,
+                        )
+                        # only update when parsing was successfull
+                        if pdf_data:
+                            logger.info('Updating Einsatzrapport with data from PDF - not yet implemented')
+                        else:
+                            logger.info('Updating Einsatzrapport not possible - PDF parsing failed')
                     else:
                         logger.error('Cannot process Einsatzprotokoll as there is no Lodur ID')
                 else:
