@@ -35,6 +35,57 @@ class Lodur:
             self.logger.fatal('Login to Lodur failed - exiting')
             raise SystemExit(1)
 
+    def einsatzprotokoll(self, lodur_id, pdf_data):
+        """ Prepare Einsatzprotokoll to be sent to Lodur 
+        TODO This doesn't work as Lodur doesn't add the values directly in to HTML but
+        uses JavaScript to dynamically populate the form data.
+        To be able to update the form we would need to have access to the existing data
+        or else it won't work.
+        Ideas: Somehow store the RAW data in a JSON file and reuse this
+        to update the form in Lodur
+        """
+
+        # when PDF parsing fails, pdf_data is false. fill with tbd when this happens
+        if pdf_data:
+            zh_alarmierung = datetime.strptime(
+                pdf_data['disposition'],
+                '%H:%M',
+            )
+            zh_fw_ausg = datetime.strptime(
+                pdf_data['ausgerueckt'],
+                '%H:%M',
+            )
+            zh_am_schad = datetime.strptime(
+                pdf_data['anort'],
+                '%H:%M',
+            )
+        else:
+            # Do nothing when no PDF data - we don't have anything to do then
+            return False
+
+        # Prepare the form
+        self.browser.open(self.url + '?modul=36&what=144&edit=1&event=' + lodur_id)
+        self.browser.select_form('#einsatzrapport_main_form')
+        print(self.browser.get_current_form().print_summary())
+
+        # Fill in form data
+        self.browser['zh_alarmierung_h'] = zh_alarmierung.hour # 12. Alarmierung
+        self.browser['zh_alarmierung_m'] = zh_alarmierung.minute # 12. Alarmierung
+        self.browser['zh_fw_ausg_h'] = zh_fw_ausg.hour # 13. FW ausgerückt
+        self.browser['zh_fw_ausg_m'] = zh_fw_ausg.minute # 13. FW ausgerückt
+        self.browser['zh_am_schad_h'] = zh_am_schad.hour # 14. Am Schadenplatz
+        self.browser['zh_am_schad_m'] = zh_am_schad.minute # 14. Am Schadenplatz
+        # The following fields are currently unknown as PDF parsing is hard for these
+        #self.browser['zh_fw_einge_h'] = 'UNKNOWN' # 15. FW eingerückt
+        #self.browser['zh_fw_einge_m'] = 'UNKNOWN' # 15. FW eingerückt
+        #self.browser['eins_erst_h'] = 'UNKNOWN' # 16. Einsatzbereitschaft erstellt
+        #self.browser['eins_erst_m'] = 'UNKNOWN' # 16. Einsatzbereitschaft erstellt
+
+        # Submit the form
+        #print(self.browser.get_current_form().print_summary())
+        self.logger.info('Submitting form Einsatzrapport')
+        self.browser.submit_selected()
+
     def einsatzrapport(self, f_id, pdf_data):
         """ Form in module 36 - Einsatzrapport """
 
