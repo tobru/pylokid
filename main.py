@@ -103,7 +103,7 @@ def main():
                             'Einsatzrapport ' + f_id + ' already created in Lodur: ' + lodur_id
                         )
                         # Upload Alarmdepesche as it could contain more information than the first one
-                        lodur_client.upload_alarmdepesche(
+                        lodur_client.einsatzrapport_alarmdepesche(
                             lodur_id,
                             os.path.join(TMP_DIR, file_name),
                         )
@@ -120,18 +120,15 @@ def main():
 
                         # create new Einsatzrapport in Lodur
                         logger.info('Creating Einsatzrapport in Lodur for ' + f_id)
-                        lodur_id = lodur_client.create_einsatzrapport(
+                        lodur_id = lodur_client.einsatzrapport(
                             f_id,
                             pdf_data,
                         )
-                        logger.info('Sent data to Lodur. Assigned Lodur ID: ' + lodur_id)
                         # store lodur id in webdav
                         webdav_client.store_lodur_id(lodur_id, f_id)
 
-                        logger.info(
-                            'Uploading PDF for ' + f_id + ' to Lodur Einsatzrapport ' + lodur_id
-                        )
-                        lodur_client.upload_alarmdepesche(
+                        # upload Alarmdepesche to Lodur
+                        lodur_client.einsatzrapport_alarmdepesche(
                             lodur_id,
                             os.path.join(TMP_DIR, file_name),
                         )
@@ -142,7 +139,7 @@ def main():
                     lodur_id = webdav_client.get_lodur_id(f_id)
                     if lodur_id:
                         logger.info('Uploading Einsatzprotokoll to Lodur')
-                        lodur_client.upload_alarmdepesche(
+                        lodur_client.einsatzrapport_alarmdepesche(
                             lodur_id,
                             os.path.join(TMP_DIR, file_name),
                         )
