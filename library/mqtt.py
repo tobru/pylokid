@@ -48,9 +48,9 @@ class MQTTClient:
                 self.mqtt_client.publish(topic + 'bemerkungen', pdf_data['bemerkungen'])
 
                 # Publish the PDF blob
-                #pdf_fh = open(pdf_file, 'rb')
-                #pdf_binary = pdf_fh.read()
-                #self.mqtt_client.publish(topic + 'pdf', bytes(pdf_binary))
+                pdf_fh = open(pdf_file, 'rb')
+                pdf_binary = pdf_fh.read()
+                self.mqtt_client.publish(topic + 'pdf', bytes(pdf_binary))
             except IndexError as err:
                 self.logger.info('[%s] Cannot publish information: %s', f_id, err)
         elif f_type == 'Einsatzprotokoll':

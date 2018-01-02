@@ -16,15 +16,13 @@ from library.mqtt import MQTTClient
 from library.pdf_extract import PDFHandling
 from library.webdav import WebDav
 
-# TODO replace by IMAP idle
-_INTERVAL = 10
-
 # Configuration
 load_dotenv(find_dotenv())
 IMAP_SERVER = os.getenv("IMAP_SERVER")
 IMAP_USERNAME = os.getenv("IMAP_USERNAME")
 IMAP_PASSWORD = os.getenv("IMAP_PASSWORD")
 IMAP_MAILBOX = os.getenv("IMAP_MAILBOX", "INBOX")
+IMAP_CHECK_INTERVAL = os.getenv("IMAP_CHECK_INTERVAL", "10")
 WEBDAV_URL = os.getenv("WEBDAV_URL")
 WEBDAV_USERNAME = os.getenv("WEBDAV_USERNAME")
 WEBDAV_PASSWORD = os.getenv("WEBDAV_PASSWORD")
@@ -176,7 +174,8 @@ def main():
         # send heartbeat
         requests.get(HEARTBEAT_URL)
         # repeat every
-        time.sleep(_INTERVAL)
+        logger.info('Waiting %s seconds until next check', IMAP_CHECK_INTERVAL)
+        time.sleep(int(IMAP_CHECK_INTERVAL))
 
 if __name__ == '__main__':
     try:

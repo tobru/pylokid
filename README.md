@@ -20,8 +20,6 @@ Einsätze correctly into [Lodur](https://www.lodur.ch/lodur.html).
 
 ### Version 1
 
-* IMAP IDLE
-* Parse Form
 * README / Docs
 
 Before version 1 can be tagged, it must have processed at least 5 real
@@ -34,6 +32,7 @@ Einsätze!
 ### Future versions
 
 * Generalize
+* IMAP Idle
 * Display PDF on Dashboard
 * Send statistics to InfluxDB
 * Webapp to see what's going on
