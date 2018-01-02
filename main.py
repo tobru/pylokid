@@ -97,65 +97,77 @@ def main():
 
                 # Take actions - depending on the type
                 if f_type == 'Einsatzausdruck_FW':
-                    lodur_id = webdav_client.get_lodur_id(f_id)
-                    if lodur_id:
+                    lodur_data = webdav_client.get_lodur_data(f_id)
+                    if lodur_data:
                         logger.info(
-                            'Einsatzrapport ' + f_id + ' already created in Lodur: ' + lodur_id
+                            '[%s] Einsatzrapport already created in Lodur', f_id
                         )
-                        # Upload Alarmdepesche as it could contain more information than the first one
+                        # Upload Alarmdepesche as it could contain more information
+                        # than the first one
                         lodur_client.einsatzrapport_alarmdepesche(
-                            lodur_id,
+                            f_id,
                             os.path.join(TMP_DIR, file_name),
+                            webdav_client,
                         )
-                    else:
-                        # this is real - publish Einsatz on MQTT
-                        # TODO publish more information about the einsatz - coming from the PDF
-                        mqtt_client.send_message(f_type, f_id)
 
+                    else:
                         # get as many information from PDF as possible
                         pdf_data = pdf.extract_einsatzausdruck(
                             os.path.join(TMP_DIR, file_name),
                             f_id,
                         )
 
+                        # publish Einsatz on MQTT
+                        # TODO publish more information about the einsatz - coming from the PDF
+                        mqtt_client.send_message(f_type, f_id)
+
                         # create new Einsatzrapport in Lodur
-                        logger.info('Creating Einsatzrapport in Lodur for ' + f_id)
-                        lodur_id = lodur_client.einsatzrapport(
+                        lodur_client.einsatzrapport(
                             f_id,
                             pdf_data,
+                            webdav_client,
                         )
-                        # store lodur id in webdav
-                        webdav_client.store_lodur_id(lodur_id, f_id)
 
-                        # upload Alarmdepesche to Lodur
+                        # upload Alarmdepesche PDF to Lodur
                         lodur_client.einsatzrapport_alarmdepesche(
-                            lodur_id,
+                            f_id,
                             os.path.join(TMP_DIR, file_name),
+                            webdav_client,
                         )
+
                 elif f_type == 'Einsatzprotokoll':
                     # Einsatz finished - publish on MQTT
                     mqtt_client.send_message(f_type, f_id)
 
-                    lodur_id = webdav_client.get_lodur_id(f_id)
-                    if lodur_id:
-                        logger.info('Uploading Einsatzprotokoll to Lodur')
+                    lodur_data = webdav_client.get_lodur_data(f_id)
+                    if lodur_data:
+                        logger.info('[%s] Uploading Einsatzprotokoll to Lodur', f_id)
+
+                        # Upload Einsatzprotokoll to Lodur
                         lodur_client.einsatzrapport_alarmdepesche(
-                            lodur_id,
+                            f_id,
                             os.path.join(TMP_DIR, file_name),
+                            webdav_client,
                         )
+
+                        # Parse the Einsatzprotokoll PDF
                         pdf_data = pdf.extract_einsatzprotokoll(
                             os.path.join(TMP_DIR, file_name),
                             f_id,
                         )
-                        # only update when parsing was successfull
-                        if pdf_data:
-                            logger.info('Updating Einsatzrapport with data from PDF - not yet implemented')
-                        else:
-                            logger.info('Updating Einsatzrapport not possible - PDF parsing failed')
+
+                        # Update entry in Lodur with parse PDF data
+                        logger.info('[%s] Updating Einsatzrapport with data from PDF', f_id)
+                        lodur_client.einsatzprotokoll(f_id, pdf_data, webdav_client)
+
                     else:
-                        logger.error('Cannot process Einsatzprotokoll as there is no Lodur ID')
+                        logger.error(
+                            '[%s] Cannot process Einsatzprotokoll as there is no Lodur ID',
+                            f_id
+                        )
+
                 else:
-                    logger.error('Unknown type: ' + f_type)
+                    logger.error('[%s] Unknown type: %s', f_id, f_type)
 
         # send heartbeat
         requests.get(HEARTBEAT_URL)

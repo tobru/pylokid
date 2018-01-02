@@ -3,6 +3,7 @@
 """ WebDav Functions """
 
 import os
+import json
 from datetime import datetime
 import logging
 import asyncio
@@ -63,41 +64,40 @@ class WebDav:
         else:
             return False
 
-    def store_lodur_id(self, lodur_id, f_id):
-        """ stores assigned lodur_id on webdav """
+    def store_lodur_data(self, f_id, lodur_data):
+        """ stores lodur data on webdav """
 
-        file_name = f_id + '_lodurid.txt'
+        file_name = f_id + '_lodur.json'
         file_path = os.path.join(self.tmp_dir, file_name)
-        if not os.path.isfile(file_path):
-            file = open(file_path, 'w')
-            file.write(str(lodur_id))
-            file.close()
-            self.logger.info('Stored Lodur ID locally in: ' + file_path)
-            self.upload(file_name, f_id)
-        else:
-            self.logger.info('Lodur ID already available locally in: ' + file_path)
 
-    def get_lodur_id(self, f_id):
-        """ gets lodur_id if it exists """
+        file = open(file_path, 'w')
+        file.write(json.dumps(lodur_data))
+        file.close()
 
-        file_name = f_id + '_lodurid.txt'
+        self.logger.info('Stored Lodur data locally in: ' + file_path)
+        self.upload(file_name, f_id)
+
+    def get_lodur_data(self, f_id):
+        """ gets lodur data if it exists """
+
+        file_name = f_id + '_lodur.json'
         file_path = os.path.join(self.tmp_dir, file_name)
 
         # first check if we already have it locally - then check on webdav
         if os.path.isfile(file_path):
             with open(file_path, 'r') as content:
-                lodur_id = content.read()
-                self.logger.info('Found Lodur ID for ' + f_id + ' locally: ' + lodur_id)
-                return lodur_id
+                lodur_data = json.loads(content.read())
+                self.logger.info('[%s] Found Lodur data locally', f_id)
+                return lodur_data
         else:
             remote_upload_dir = self.webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
             remote_file_path = remote_upload_dir + '/' + file_name
             if self.loop.run_until_complete(self.webdav.exists(remote_file_path)):
                 self.loop.run_until_complete(self.webdav.download(remote_file_path, file_path))
                 with open(file_path, 'r') as content:
-                    lodur_id = content.read()
-                    self.logger.info('Found Lodur ID for ' + f_id + ' on WebDAV: ' + lodur_id)
-                    return lodur_id
+                    lodur_data = json.loads(content.read())
+                    self.logger.info('[%s] Found Lodur data on WebDAV', f_id)
+                    return lodur_data
             else:
-                self.logger.info('No Lodur ID found for ' + f_id)
+                self.logger.info('[%s] No existing Lodur data found', f_id)
                 return False
