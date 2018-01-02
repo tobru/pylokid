@@ -16,7 +16,7 @@ class EmailHandling:
 
     def __init__(self, server, username, password, mailbox, tmp_dir):
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Connecting to IMAP server ' + server)
+        self.logger.info('Connecting to IMAP server %s', server)
 
         self.tmp_dir = tmp_dir
         try:
@@ -24,7 +24,7 @@ class EmailHandling:
             self.imap.login(username, password)
             self.imap.select(mailbox, readonly=False)
         except Exception as err:
-            self.logger.error('IMAP connection failed - exiting: ' + str(err))
+            self.logger.error('IMAP connection failed - exiting: %s', str(err))
             raise SystemExit(1)
 
         self.logger.info('IMAP connection successfull')
@@ -42,7 +42,7 @@ class EmailHandling:
             return False
 
         num_messages = len(msg_ids[0].split())
-        self.logger.info('Found ' + str(num_messages) + ' matching messages')
+        self.logger.info('Found %s matching messages', str(num_messages))
 
         return num_messages, msg_ids
 
@@ -63,14 +63,17 @@ class EmailHandling:
                 if isinstance(response_part, tuple):
                     mail = email.message_from_string(str(response_part[1], 'utf-8'))
                     subject = mail['subject']
-                    self.logger.info('Getting attachment from: ' + subject)
+                    f_type, f_id = self.parse_subject(subject)
+                    self.logger.info('[%s] Getting attachment from "%s"', f_id, subject)
                     for part in mail.walk():
                         file_name = part.get_filename()
                         if not file_name:
-                            self.logger.debug('Most probably not an attachment as no filename found')
+                            self.logger.debug(
+                                'Most probably not an attachment as no filename found'
+                            )
                             continue
 
-                        self.logger.info('Extracting attachment: ' + file_name)
+                        self.logger.info('[%s] Extracting attachment "%s"', f_id, file_name)
 
                         if bool(file_name):
                             f_type, _ = self.parse_subject(subject)
@@ -78,7 +81,7 @@ class EmailHandling:
                             # save attachment to filesystem
                             file_path = os.path.join(self.tmp_dir, renamed_file_name)
 
-                            self.logger.info('Saving attachment to ' + file_path)
+                            self.logger.info('[%s] Saving attachment to "%s"', f_id, file_path)
                             if not os.path.isfile(file_path):
                                 file = open(file_path, 'wb')
                                 file.write(part.get_payload(decode=True))
@@ -87,7 +90,7 @@ class EmailHandling:
                             data[subject] = renamed_file_name
 
             # mark as seen
-            self.logger.info('Marking message as seen ' + subject)
+            self.logger.info('[%s] Marking message "%s" as seen', f_id, subject)
             self.imap.store(msg_id, '+FLAGS', '(\\Seen)')
 
         return data

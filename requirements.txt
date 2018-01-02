@@ -1,4 +1,5 @@
 aioeasywebdav==2.4.0
+MechanicalSoup==0.9.0.post4
 paho-mqtt==1.3.1
 pdfminer.six==20170720
 python-dotenv==0.7.1
