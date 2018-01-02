@@ -10,11 +10,11 @@ import requests
 from dotenv import find_dotenv, load_dotenv
 
 # local classes
-from emailhandling import EmailHandling
-from lodur import Lodur
-from mqtt import MQTTClient
-from pdf_extract import PDFHandling
-from webdav import WebDav
+from library.emailhandling import EmailHandling
+from library.lodur import Lodur
+from library.mqtt import MQTTClient
+from library.pdf_extract import PDFHandling
+from library.webdav import WebDav
 
 # TODO replace by IMAP idle
 _INTERVAL = 10
@@ -83,6 +83,7 @@ def main():
     # Initialize PDF Parser
     pdf = PDFHandling()
 
+    # Main Loop
     while True:
         attachments = {}
         num_messages, msg_ids = imap_client.search_emails()
@@ -97,7 +98,9 @@ def main():
 
                 # Take actions - depending on the type
                 if f_type == 'Einsatzausdruck_FW':
+                    logger.info('[%s] Processing type %s', f_id, f_type)
                     lodur_data = webdav_client.get_lodur_data(f_id)
+
                     if lodur_data:
                         logger.info(
                             '[%s] Einsatzrapport already created in Lodur', f_id
@@ -136,13 +139,12 @@ def main():
                         )
 
                 elif f_type == 'Einsatzprotokoll':
+                    logger.info('[%s] Processing type %s', f_id, f_type)
                     # Einsatz finished - publish on MQTT
                     mqtt_client.send_message(f_type, f_id)
 
                     lodur_data = webdav_client.get_lodur_data(f_id)
                     if lodur_data:
-                        logger.info('[%s] Uploading Einsatzprotokoll to Lodur', f_id)
-
                         # Upload Einsatzprotokoll to Lodur
                         lodur_client.einsatzrapport_alarmdepesche(
                             f_id,
@@ -157,7 +159,6 @@ def main():
                         )
 
                         # Update entry in Lodur with parse PDF data
-                        logger.info('[%s] Updating Einsatzrapport with data from PDF', f_id)
                         lodur_client.einsatzprotokoll(f_id, pdf_data, webdav_client)
 
                     else:

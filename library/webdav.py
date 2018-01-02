@@ -14,7 +14,7 @@ class WebDav:
 
     def __init__(self, url, username, password, webdav_basedir, tmp_dir):
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Connecting to WebDAV server: ' + url)
+        self.logger.info('Connecting to WebDAV server %s', url)
 
         self.loop = asyncio.get_event_loop()
         self.webdav_basedir = webdav_basedir
@@ -26,25 +26,25 @@ class WebDav:
                 password=password,
             )
         except:
-            self.logger.error('WebDav connection failed - exiting')
+            self.logger.error('WebDAV connection failed - exiting')
 
-        self.logger.info('WebDav connection successfull')
+        self.logger.info('WebDAV connection successfull')
 
     def upload(self, file_name, f_id):
         """ uploads a file to webdav - checks for existence before doing so """
 
         # upload with webdav
         remote_upload_dir = self.webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
-        self.logger.info('Uploading file to WebDAV:' + remote_upload_dir)
+        self.logger.info('[%s] Uploading file to WebDAV [%s]', f_id, remote_upload_dir)
 
         # create directory if not yet there
         if not self.loop.run_until_complete(self.webdav.exists(remote_upload_dir)):
-            self.logger.info('Creating directory ' + remote_upload_dir)
+            self.logger.info('[%s] Creating directory [%s]', f_id, remote_upload_dir)
             self.loop.run_until_complete(self.webdav.mkdir(remote_upload_dir))
 
         remote_file_path = remote_upload_dir + "/" + file_name
         if self.loop.run_until_complete(self.webdav.exists(remote_file_path)):
-            self.logger.info('File ' + file_name + ' already exists on webdav')
+            self.logger.info('[%s] File %s already exists on WebDAV', f_id, file_name)
         else:
             self.loop.run_until_complete(
                 self.webdav.upload(
@@ -52,14 +52,14 @@ class WebDav:
                     remote_file_path,
                 )
             )
-            self.logger.info('File ' + file_name + ' uploaded')
+            self.logger.info('[%s] File %s uploaded', f_id, file_name)
 
     def einsatz_exists(self, f_id):
         """ check if an einsatz is already created """
 
         remote_upload_dir = self.webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
         if self.loop.run_until_complete(self.webdav.exists(remote_upload_dir)):
-            self.logger.info('Einsatz exists ' + f_id)
+            self.logger.info('[%s] Einsatz exists on WebDAV', f_id)
             return True
         else:
             return False
@@ -74,7 +74,7 @@ class WebDav:
         file.write(json.dumps(lodur_data))
         file.close()
 
-        self.logger.info('Stored Lodur data locally in: ' + file_path)
+        self.logger.info('[%s] Stored Lodur data locally in %s', f_id, file_path)
         self.upload(file_name, f_id)
 
     def get_lodur_data(self, f_id):

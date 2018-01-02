@@ -37,14 +37,7 @@ class Lodur:
             raise SystemExit(1)
 
     def einsatzprotokoll(self, f_id, pdf_data, webdav_client):
-        """ Prepare Einsatzprotokoll to be sent to Lodur 
-        TODO This doesn't work as Lodur doesn't add the values directly in to HTML but
-        uses JavaScript to dynamically populate the form data.
-        To be able to update the form we would need to have access to the existing data
-        or else it won't work.
-        Ideas: Somehow store the RAW data in a JSON file and reuse this
-        to update the form in Lodur
-        """
+        """ Prepare Einsatzprotokoll to be sent to Lodur """
 
         # check if data is already sent to lodur - data contains lodur_id
         lodur_data = webdav_client.get_lodur_data(f_id)
@@ -153,6 +146,8 @@ class Lodur:
     def einsatzrapport_alarmdepesche(self, f_id, file_path, webdav_client):
         """ Upload a file to Alarmdepesche """
 
+        self.logger.info('[%s] Submitting Alarmdepesche to Lodur', f_id)
+
         # check if data is already sent to lodur - data contains lodur_id
         lodur_id = webdav_client.get_lodur_data(f_id)['event_id']
 
@@ -161,7 +156,6 @@ class Lodur:
         self.browser.select_form('#frm_alarmdepesche')
 
         # Fill in form data
-        self.logger.info('[%s] Submitting Alarmdepesche to Lodur', f_id)
         self.browser['alarmdepesche'] = open(file_path, 'rb')
 
         # Submit the form
@@ -224,7 +218,7 @@ class Lodur:
                 self.url +
                 '?modul=36&edit=1&what=144&event=' + lodur_id
             ).text
-            auto_num = re.search("fdata\['auto_num'\]\[2\]='(.*)';", content).group(1)
+            auto_num = re.search(r"fdata\['auto_num'\]\[2\]='(.*)';", content).group(1)
             self.logger.info('[%s] Lodur assigned the auto_num %s', lodur_data['e_r_num'], auto_num)
 
             return lodur_id, auto_num

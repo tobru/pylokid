@@ -20,13 +20,9 @@ Einsätze correctly into [Lodur](https://www.lodur.ch/lodur.html).
 
 ### Version 1
 
-* Much more error handling
-* Parse PDF
-  * Store parsed data in Lodur text fields for copy/paste
-* Cleanup code into proper functions and classes
-  * Lodur "API" class
-* Proper exit
-* Healthchecks for Kubernetes probes
+* IMAP IDLE
+* MQTT Message Format / Send PDF payload
+* Parse Form
 
 Before version 1 can be tagged, it must have processed at least 5 real
 Einsätze!
@@ -39,7 +35,6 @@ Einsätze!
 
 * Generalize
 * Documentation
-* IMAP idle
 * Display PDF on Dashboard
 * Send statistics to InfluxDB
 * Webapp to see what's going on
