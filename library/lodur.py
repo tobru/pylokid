@@ -197,7 +197,7 @@ class Lodur:
             # Encoding bk causes some troubles - therefore we skip that - but it
             # would be good if it would be encoded as it can / will contain f.e.abs
             # Umlauts
-            self.logger.info('Form data: %s = %s', key, value)
+            self.logger.debug('Form data: %s = %s', key, value)
             if key in ('eins_ereig', 'adr', 'wer_ala'):
                 self.browser[key] = value.encode('iso-8859-1')
             else:
