@@ -38,7 +38,6 @@ Einsätze!
 ### Future versions
 
 * Generalize
-* Documentation
 * IMAP idle
 * Display PDF on Dashboard
 * Webapp to see what's going on
