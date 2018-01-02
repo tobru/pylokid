@@ -2,32 +2,107 @@
 
 "Loki - Nordischer Gott des Feuers"
 
-This app helps a Feuerwehr Fourier from the Canton of Zurich
-in Switzerland to ease the pain of the huge work for getting
-Einsätze correctly into [Lodur](https://www.lodur.ch/lodur.html).
+*General application description is in German*
 
-## Idea
+**pylokid** ist eine Hilfsapplikation um z.B. Einsatzaufträge, welche die
+**Einsatzleitzentrale (ELZ)** per E-Mail versendet, automatisch im
+**[Lodur](https://www.lodur.ch/lodur.html)** einzutragen.
+Die Applikation versucht so viele Informationen über den Einsatz in
+Erfahrung zu bringen, wie nur möglich. Dies geschieht unter anderem
+durch Auslesen von Daten aus dem der E-Mail angehängten PDF.
 
-* Get mails sent by ELZ with subjects
-  "Einsatzausdruck_FW" and "Einsatzprotokoll"
-* Store attached PDF in Feuerwehr Cloud (WebDAV)
-* Publish new message over MQTT
-* Parse PDFs and try to get information about Einsatz
-* Connect to Lodur and create a new Einsatzrapport with
-  as much information as possible
+Im Moment ist die Applikation vermutlich nur im **Kanton Zürich** einsetzbar
+und vermutlich auch nur für die **[Feuerwehr Urdorf](https://www.feuerwehrurdorf.ch/)**.
+Bei Interesse an dieser Applikation von anderen Feuerwehren bin ich
+gerne bereit, diese entsprechend zu generalisieren und
+[weiter zu entwickeln](https://github.com/tobru/pylokid/issues/new).
+
+## Funktionsweise
+
+Bei einem Feuerwehralarm sendet die ELZ automatisch eine E-Mail
+mit einem PDF im Anhang, welches alle notwendigen Informationen
+zum Einsatz enthält. Nach Abschluss des Einsatzes sendet die ELZ
+ein weiteres E-Mail mit dem Einsatzprotokoll.
+
+pylokid funktioniert so:
+* Alle x Sekunden wird das angegebene Postfach nach ELZ E-Mails
+  überprüft. Diese identifizieren sich mit dem Betreff
+  "Einsatzausdruck_FW" oder "Einsatzprotokoll".
+* Wird ein passendes E-Mail gefunden, wird der Anhang (das PDF)
+  heruntergeladen, in die Cloud gespeichert (WebDAV) und im Lodur
+  ein entsprechender Einsatzrapport eröffnet und vorausgefüllt.
+  Das PDF wird sinnvoll umbenannt und als Alarmdepesche ins Lodur
+  geladen.
+* Kommen weitere E-Mails mit dem Betreff "Einsatzausdruck_FW" werden
+  diese im Lodur am entsprechenden Einsatzrapport angehängt.
+* Ist der Einsatz abgeschlossen und das Einsatzprotokoll eingetroffen
+  werden die Informationen im Lodur nachgetragen.
+
+Desweiteren wird über MQTT eine Nachricht mit möglichst vielen
+Informationen publiziert, inkl. dem PDF. So kann ein Drittsystem
+auf einen Einsatz reagieren, z.B. den Einsatz auf einem Dashboard
+darstellen.
+
+## Stolpersteine / Herausforderungen
+
+Im abgebildeten Prozess gibt es viele Stolpersteine. Zwei davon:
+
+* Die ELZ sendet PDFs welche by design keine Datenstruktur haben.
+  Somit ist das herausholen von Informationen mehr Glückssache
+  als Verstand. Würde die ELZ die Informationen vom PDF als
+  strukturierte Daten liefern, würde das System um einiges stabiler.
+* Lodur hat keine API. Alle Datenmanipulationen funktioniert über
+  Reverse Engineering der HTML Formulare. Dabei kamen einige
+  spezielle Techniken von Lodur zum Vorschein:
+  * Nach dem Anlegen eines Einsatzrapportes wird in der Antwort des
+    Servers dieselbe Seite mit einem JavaScript Script gesendet,
+    welches die Browserseite noch einmal neu lädt und zum angelegten
+    Datensatz weiterleitet. Nur in diesem JavaScript Tag findet man
+    die zugewiesene Datensatz ID.
+  * Zur Bearbeitung eines Datensatzes werden die bekannten Daten nicht
+    etwa im HTML Formular als "value" eingetragen, sondern via
+    JavaScript ausgefüllt. Und es müssen immer alle Daten nochmals
+    gesendet werden, inkl. einiger hidden Fields.
+
+Um die Probleme mit Lodur zu umgehen, werden alle Daten, welche
+an Lodur gesendet werden, in einem JSON File im WebDAV neben den
+PDFs abgelegt. So lässt sich im Nachhinein ein Datensatz bearbeiten
+und eine Zuordnung des Einsatzes im WebDAV und in Lodur herstellen.
+
+## Installation and Configuration
+
+The application is written in Python and runs perfectly in OpenShift
+with the Python S2I builder.
+
+Configuration is done via environment variables:
+
+* *IMAP_SERVER*: Adress of IMAP server
+* *IMAP_USERNAME*: Username for IMAP login
+* *IMAP_PASSWORD*: Password of IMAP user
+* *IMAP_MAILBOX*: IMAP Mailbox to check for matching messages. Default: INBOX
+* *IMAP_CHECK_INTERVAL*: Interval in seconds to check mailbox. Default: 30
+* *WEBDAV_URL*: Complete WebDAV URL
+* *WEBDAV_USERNAME*: Username for WebDAV
+* *WEBDAV_PASSWORD*: Password of WebDAV user
+* *WEBDAV_BASEDIR*: Basedir on WebDAV
+* *TMP_DIR*: Temporary directory. Default: /tmp
+* *MQTT_SERVER*: Address of MQTT Broker
+* *MQTT_USER*: Username for MQTT login
+* *MQTT_PASSWORD*: Password of MQTT user
+* *MQTT_BASE_TOPIC*: Base topic to publish information
+* *LODUR_USER*: Username for Lodur login
+* *LODUR_PASSWORD*: Password of Lodur user
+* *LODUR_BASE_URL*: Lodur base URL
+* *HEARTBEAT_URL*: URL to send Hearbeat to (https://hchk.io/)
+
+Environment variables can also be stored in a `.env` file.
 
 ## TODO
 
 ### Version 1
 
-* README / Docs
-
-Before version 1 can be tagged, it must have processed at least 5 real
+Before version 1 can be tagged, it must have processed at least 10 real
 Einsätze!
-
-### Known instabilities
-
-* Storing files with "current year" doesn't work well during end of year
 
 ### Future versions
 
@@ -39,6 +114,16 @@ Einsätze!
 * Get as many data out of the PDFs as possible
 * Simple webform to fill-in missing data (skipping Lodur completely)
   * Webapp for chosing who was there during the Einsatz (tablet ready)
+
+## WCPGW
+
+What could possibly go wrong? A lot!
+
+* Storing files with "current year" doesn't work well during end of year
+* PDF layout may change without information
+* PDF parsing may fail due to PDF creation instabilities
+* Lodur forms can change without notice
+* Error handling doesn't catch all cases
 
 ## Lodur Information Gathering
 
