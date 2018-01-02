@@ -64,9 +64,9 @@ class PDFHandling:
 
         # sanity check to see if we can correlate the f_id
         if f_id == splited[14]:
-            self.logger.info('[%s] ID found in PDF', f_id)
+            self.logger.info('[%s] ID matches in PDF', f_id)
         else:
-            self.logger.error('[%s] ID not found in PDF', f_id)
+            self.logger.error('[%s] ID does not match in PDF', f_id)
             return False
 
         # search some well-known words for later positional computation
@@ -75,7 +75,7 @@ class PDFHandling:
             index_dispo = splited.index('Disponierte Einheiten')
             index_hinweis = splited.index('Hinweis')
         except IndexError:
-            self.logger.error('[%s] PDF file doesn\'t look like a Einsatzausdruck', f_id)
+            self.logger.error('[%s] PDF file does not look like a Einsatzausdruck', f_id)
             return False
 
         # get length of bemerkungen field
@@ -87,14 +87,15 @@ class PDFHandling:
             'auftrag': splited[14],
             'datum': splited[15],
             'zeit': splited[16],
-            'melder': self.concatenate_to_multiline_string(splited, 18, 19),
+            'melder': splited[18] + ' ' + splited[19],
             'erfasser': splited[20],
             'bemerkungen': self.concatenate_to_multiline_string(
                 splited,
-                index_bemerkungen,
+                index_bemerkungen + 1,
                 index_bemerkungen + length_bemerkungen
-            ),
+            ).rstrip(),
             'einsatz': splited[index_dispo+5],
+            'sondersignal': splited[index_dispo+6],
             'plzort': splited[index_dispo+8].title(),
             'strasse': splited[index_dispo+9].title(),
             #'objekt': splited[],
@@ -109,9 +110,9 @@ class PDFHandling:
 
         # sanity check to see if we can correlate the f_id
         if f_id == splited[26]:
-            self.logger.info('[%s] ID found in PDF', f_id)
+            self.logger.info('[%s] ID matches in PDF', f_id)
         else:
-            self.logger.error('[%s] ID not found in PDF', f_id)
+            self.logger.error('[%s] ID does not match in PDF', f_id)
             return False
 
         data = {

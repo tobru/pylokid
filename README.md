@@ -21,8 +21,8 @@ Einsätze correctly into [Lodur](https://www.lodur.ch/lodur.html).
 ### Version 1
 
 * IMAP IDLE
-* MQTT Message Format / Send PDF payload
 * Parse Form
+* README / Docs
 
 Before version 1 can be tagged, it must have processed at least 5 real
 Einsätze!
@@ -34,7 +34,6 @@ Einsätze!
 ### Future versions
 
 * Generalize
-* Documentation
 * Display PDF on Dashboard
 * Send statistics to InfluxDB
 * Webapp to see what's going on

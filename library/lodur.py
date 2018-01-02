@@ -6,7 +6,6 @@ import re
 import logging
 from datetime import datetime
 import mechanicalsoup
-from webdav import WebDav
 
 class Lodur:
     """ Lodur """
@@ -95,11 +94,15 @@ class Lodur:
                 '%H:%M',
             )
             eins_ereig = pdf_data['einsatz']
+            bemerkungen = pdf_data['bemerkungen']
+            wer_ala = pdf_data['melder']
             adr = pdf_data['strasse'] + ', ' + pdf_data['plzort']
         else:
             date = datetime.now()
             time = datetime.now()
             eins_ereig = 'UNKNOWN'
+            bemerkungen = 'UNKNOWN'
+            wer_ala = 'UNKNOWN'
             adr = 'UNKNOWN'
 
         # Fill in form data
@@ -122,11 +125,12 @@ class Lodur:
             'e_ort_1': '306', # 06. Einsatzort: Urdorf 306, Birmensdorf 298
             'eins_ereig': eins_ereig, # 07. Ereignis
             'adr': adr, # 08. Adresse
+            'wer_ala': wer_ala, # 10. Wer hat alarmiert
             'zh_alarmierung_h': str(time.hour), # 12. Alarmierung
             'zh_alarmierung_m': str(time.minute), # 12. Alarmierung
             'ang_sit': 'TBD1', # 17. Angetroffene Situation
             'mn': 'TBD2', # 19. Massnahmen
-            'bk': 'TBD3', # 20. Bemerkungen
+            'bk': bemerkungen, # 20. Bemerkungen
             'en_kr_feuwehr': '1', # 21. Einsatzkräfte
             'ali_io': '1', # 24. Alarmierung
             'kopie_gvz': '1', # 31. Kopie innert 10 Tagen an GVZ
@@ -189,9 +193,12 @@ class Lodur:
 
         # Prepare the form data to be submitted
         for key, value in lodur_data.items():
-            # Encode fields so they are sent in correct format
-            self.logger.debug('Form data: %s = %s', key, value)
-            if key in ('eins_ereig', 'adr'):
+            # Encode some of the fields so they are sent in correct format
+            # Encoding bk causes some troubles - therefore we skip that - but it
+            # would be good if it would be encoded as it can / will contain f.e.abs
+            # Umlauts
+            self.logger.info('Form data: %s = %s', key, value)
+            if key in ('eins_ereig', 'adr', 'wer_ala'):
                 self.browser[key] = value.encode('iso-8859-1')
             else:
                 self.browser[key] = value

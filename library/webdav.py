@@ -35,16 +35,16 @@ class WebDav:
 
         # upload with webdav
         remote_upload_dir = self.webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
-        self.logger.info('[%s] Uploading file to WebDAV [%s]', f_id, remote_upload_dir)
+        self.logger.info('[%s] Uploading file to WebDAV "%s"', f_id, remote_upload_dir)
 
         # create directory if not yet there
         if not self.loop.run_until_complete(self.webdav.exists(remote_upload_dir)):
-            self.logger.info('[%s] Creating directory [%s]', f_id, remote_upload_dir)
+            self.logger.info('[%s] Creating directory "%s"', f_id, remote_upload_dir)
             self.loop.run_until_complete(self.webdav.mkdir(remote_upload_dir))
 
         remote_file_path = remote_upload_dir + "/" + file_name
         if self.loop.run_until_complete(self.webdav.exists(remote_file_path)):
-            self.logger.info('[%s] File %s already exists on WebDAV', f_id, file_name)
+            self.logger.info('[%s] File "%s" already exists on WebDAV', f_id, file_name)
         else:
             self.loop.run_until_complete(
                 self.webdav.upload(
@@ -52,7 +52,7 @@ class WebDav:
                     remote_file_path,
                 )
             )
-            self.logger.info('[%s] File %s uploaded', f_id, file_name)
+            self.logger.info('[%s] File "%s" uploaded', f_id, file_name)
 
     def einsatz_exists(self, f_id):
         """ check if an einsatz is already created """

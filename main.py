@@ -33,6 +33,7 @@ TMP_DIR = os.getenv("TMP_DIR", "/tmp")
 MQTT_SERVER = os.getenv("MQTT_SERVER")
 MQTT_USER = os.getenv("MQTT_USER")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
+MQTT_BASE_TOPIC = os.getenv("MQTT_BASE_TOPIC", "pylokid")
 LODUR_USER = os.getenv("LODUR_USER")
 LODUR_PASSWORD = os.getenv("LODUR_PASSWORD")
 LODUR_BASE_URL = os.getenv("LODUR_BASE_URL")
@@ -78,6 +79,7 @@ def main():
         MQTT_SERVER,
         MQTT_USER,
         MQTT_PASSWORD,
+        MQTT_BASE_TOPIC,
     )
 
     # Initialize PDF Parser
@@ -114,15 +116,16 @@ def main():
                         )
 
                     else:
+                        ## Here we get the initial Einsatzauftrag - Time to run
                         # get as many information from PDF as possible
+                        pdf_file = os.path.join(TMP_DIR, file_name)
                         pdf_data = pdf.extract_einsatzausdruck(
-                            os.path.join(TMP_DIR, file_name),
+                            pdf_file,
                             f_id,
                         )
 
                         # publish Einsatz on MQTT
-                        # TODO publish more information about the einsatz - coming from the PDF
-                        mqtt_client.send_message(f_type, f_id)
+                        mqtt_client.send_message(f_type, f_id, pdf_data, pdf_file)
 
                         # create new Einsatzrapport in Lodur
                         lodur_client.einsatzrapport(
@@ -141,7 +144,7 @@ def main():
                 elif f_type == 'Einsatzprotokoll':
                     logger.info('[%s] Processing type %s', f_id, f_type)
                     # Einsatz finished - publish on MQTT
-                    mqtt_client.send_message(f_type, f_id)
+                    mqtt_client.send_message(f_type, f_id, pdf_data, pdf_file)
 
                     lodur_data = webdav_client.get_lodur_data(f_id)
                     if lodur_data:
