@@ -62,6 +62,8 @@ class PDFHandling:
 
         splited = self.convert(file).splitlines()
 
+        self.logger.info('[%s] Parsed PDF raw: %s', f_id, splited)
+
         # sanity check to see if we can correlate the f_id
         if f_id == splited[14]:
             self.logger.info('[%s] ID matches in PDF', f_id)
@@ -70,7 +72,7 @@ class PDFHandling:
             return False
 
         # search some well-known words for later positional computation
-        try:    
+        try:
             index_bemerkungen = splited.index('Bemerkungen')
             index_dispo = splited.index('Disponierte Einheiten')
             index_hinweis = splited.index('Hinweis')
