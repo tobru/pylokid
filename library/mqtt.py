@@ -34,23 +34,23 @@ class MQTTClient:
         if f_type == 'Einsatzausdruck_FW':
             try:
                 self.mqtt_client.publish(topic + 'typ', 'Einsatzauftrag')
-                self.mqtt_client.publish(topic + 'einsatz', pdf_data['einsatz'])
-                self.mqtt_client.publish(
-                    topic + 'datumzeit',
-                    pdf_data['datum'] + ' - ' + pdf_data['zeit']
-                )
-                self.mqtt_client.publish(topic + 'sondersignal', pdf_data['sondersignal'])
-                self.mqtt_client.publish(
-                    topic + 'adresse',
-                    pdf_data['strasse'] + ', ' + pdf_data['plzort']
-                )
-                self.mqtt_client.publish(topic + 'hinweis', pdf_data['hinweis'])
-                self.mqtt_client.publish(topic + 'bemerkungen', pdf_data['bemerkungen'])
+                #self.mqtt_client.publish(topic + 'einsatz', pdf_data['einsatz'])
+                #self.mqtt_client.publish(
+                #    topic + 'datumzeit',
+                #    pdf_data['datum'] + ' - ' + pdf_data['zeit']
+                #)
+                #self.mqtt_client.publish(topic + 'sondersignal', pdf_data['sondersignal'])
+                #self.mqtt_client.publish(
+                #    topic + 'adresse',
+                #    pdf_data['strasse'] + ', ' + pdf_data['plzort']
+                #)
+                #self.mqtt_client.publish(topic + 'hinweis', pdf_data['hinweis'])
+                #self.mqtt_client.publish(topic + 'bemerkungen', pdf_data['bemerkungen'])
 
-                # Publish the PDF blob
-                pdf_fh = open(pdf_file, 'rb')
-                pdf_binary = pdf_fh.read()
-                self.mqtt_client.publish(topic + 'pdf', bytes(pdf_binary))
+                ## Publish the PDF blob
+                #pdf_fh = open(pdf_file, 'rb')
+                #pdf_binary = pdf_fh.read()
+                #self.mqtt_client.publish(topic + 'pdf', bytes(pdf_binary))
             except IndexError as err:
                 self.logger.info('[%s] Cannot publish information: %s', f_id, err)
         elif f_type == 'Einsatzprotokoll':
