@@ -42,7 +42,7 @@ class MQTTClient:
                 #self.mqtt_client.publish(topic + 'sondersignal', pdf_data['sondersignal'])
                 #self.mqtt_client.publish(
                 #    topic + 'adresse',
-                #    pdf_data['strasse'] + ', ' + pdf_data['plzort']
+                #    pdf_data['strasse'] + ', ' + pdf_data['ort']
                 #)
                 #self.mqtt_client.publish(topic + 'hinweis', pdf_data['hinweis'])
                 #self.mqtt_client.publish(topic + 'bemerkungen', pdf_data['bemerkungen'])

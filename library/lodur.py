@@ -96,7 +96,7 @@ class Lodur:
             eins_ereig = pdf_data['einsatz']
             bemerkungen = pdf_data['bemerkungen']
             wer_ala = pdf_data['melder']
-            adr = pdf_data['strasse'] + ', ' + pdf_data['plzort']
+            adr = pdf_data['strasse'] + ', ' + pdf_data['ort']
         else:
             date = datetime.now()
             time = datetime.now()
