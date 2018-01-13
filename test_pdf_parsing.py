@@ -5,6 +5,7 @@ from pathlib import Path
 from library.pdf_extract import PDFHandling
 
 PATH = '/tmp/pylokid'
+PATH = '/home/tobru/tmp/pylokid/Einsatzausdruck_FW'
 
 logging.basicConfig(
     level=logging.INFO,

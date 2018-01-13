@@ -50,10 +50,10 @@ class Lodur:
         self.browser.open(self.url + '?modul=16')
         page = self.browser.get_current_page()
         if page.find(alt='LOGOUT'):
-            self.logger.info('Logged in')
+            self.logger.debug('Logged in')
             return True
         else:
-            self.logger.info('Not logged in')
+            self.logger.debug('Not logged in')
             return False
 
     def einsatzprotokoll(self, f_id, pdf_data, webdav_client):
