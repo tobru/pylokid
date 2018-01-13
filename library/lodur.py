@@ -15,25 +15,46 @@ class Lodur:
         self.logger.info('Connecting to Lodur')
 
         self.url = url
+        self.username = username
+        self.password = password
 
         # MechanicalSoup initialization and login to Lodur
         self.browser = mechanicalsoup.StatefulBrowser()
-        # The login form is located in module number 9
-        self.browser.open(self.url + '?modul=9')
-        self.browser.select_form()
 
-        self.browser['login_member_name'] = username
-        self.browser['login_member_pwd'] = password
-        self.browser.submit_selected()
-
-        # Check if login succeeded by finding the img with
-        # alt text LOGOUT
-        page = self.browser.get_current_page()
-        if page.find(alt='LOGOUT'):
+        self.login()
+        if self.logged_in():
             self.logger.info('Login to Lodur succeeded')
         else:
             self.logger.fatal('Login to Lodur failed - exiting')
             raise SystemExit(1)
+
+    def login(self):
+        """ Login to lodur """
+
+        # The login form is located in module number 9
+        self.browser.open(self.url + '?modul=9')
+        # only log in when not yed logged in
+        if not self.logged_in():
+            # open login page again as the logged_in function has navigated to another page
+            self.browser.open(self.url + '?modul=9')
+            self.browser.select_form()
+
+            self.browser['login_member_name'] = self.username
+            self.browser['login_member_pwd'] = self.password
+            self.browser.submit_selected()
+
+    def logged_in(self):
+        """ check if logged in to lodur - session is valid """
+        # Check if login succeeded by finding the img with
+        # alt text LOGOUT on dashboard
+        self.browser.open(self.url + '?modul=16')
+        page = self.browser.get_current_page()
+        if page.find(alt='LOGOUT'):
+            self.logger.info('Logged in')
+            return True
+        else:
+            self.logger.info('Not logged in')
+            return False
 
     def einsatzprotokoll(self, f_id, pdf_data, webdav_client):
         """ Prepare Einsatzprotokoll to be sent to Lodur """
@@ -152,6 +173,9 @@ class Lodur:
 
         self.logger.info('[%s] Submitting Alarmdepesche to Lodur', f_id)
 
+        # Login to lodur
+        self.login()
+
         # check if data is already sent to lodur - data contains lodur_id
         lodur_id = webdav_client.get_lodur_data(f_id)['event_id']
 
@@ -168,6 +192,9 @@ class Lodur:
 
     def submit_form_einsatzrapport(self, lodur_data):
         """ Form in module 36 - Einsatzrapport """
+
+        # Login to lodur
+        self.login()
 
         # Prepare the form
         if 'event_id' in lodur_data:
