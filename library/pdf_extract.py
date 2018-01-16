@@ -73,6 +73,7 @@ class PDFHandling:
 
         # search some well-known words for later positional computation
         try:
+            index_einsatzauftragfw = splited.index('Einsatzauftrag Feuerwehr')
             index_erfasser = splited.index('Erfasser')
             index_auftrag = splited.index('Auftrag')
             index_bemerkungen = splited.index('Bemerkungen')
@@ -80,27 +81,56 @@ class PDFHandling:
             index_einsatz = splited.index('Einsatz')
             index_hinweis = splited.index('Hinweis')
             index_maps = splited.index('Google Maps')
-        except IndexError:
+        except ValueError:
             self.logger.error('[%s] PDF file does not look like a Einsatzausdruck', f_id)
             return False
 
         # the PDF parsing not always produces the same output
         # let's define the already known output
         if index_bemerkungen == 6:
+            self.logger.info('[%s] Found Bemerkungen on line 6', f_id)
             # get length of bemerkungen field
             # it lives between the line which contains 'Bemerkungen' and
             # the line 'Disponierte Einheiten'
             length_bemerkungen = index_auftrag - index_bemerkungen - 1
             erfasser = splited[index_dispo - 2]
+            auftrag = splited[index_erfasser + 2]
+            datum = splited[index_erfasser + 3]
+            zeit = splited[index_erfasser + 4]
+            einsatz = splited[index_einsatz - 6]
+            sondersignal = splited[index_einsatz - 5]
+            ort = splited[index_einsatz - 3]
+            strasse = splited[index_einsatz - 2]
             # sometimes there is just a phone number for the field melder but on
             # the second line, so the lines vary for erfasser and melder
             if index_dispo - index_erfasser == 10:
                 melder = splited[index_dispo - 4] + ', ' + splited[index_dispo - 3]
             else:
                 melder = splited[index_dispo - 4]
-        elif index_bemerkungen == 21 or index_bemerkungen == 22:
+        # BMA style
+        elif index_bemerkungen == 20:
+            self.logger.info('[%s] Found Bemerkungen on line 20', f_id)
             length_bemerkungen = index_dispo - index_bemerkungen - 1
             erfasser = splited[index_bemerkungen - 2]
+            auftrag = splited[index_einsatzauftragfw + 2]
+            datum = splited[index_einsatzauftragfw + 3]
+            zeit = splited[index_einsatzauftragfw + 4]
+            einsatz = splited[index_einsatz + 6]
+            sondersignal = splited[index_einsatz + 7]
+            ort = splited[index_einsatz + 9]
+            strasse = splited[index_einsatz + 10]
+            melder = 'BMA' # There is no melder on a BMA Einsatzausdruck
+        elif index_bemerkungen == 21 or index_bemerkungen == 22:
+            self.logger.info('[%s] Found Bemerkungen on line 21 or 22', f_id)
+            length_bemerkungen = index_dispo - index_bemerkungen - 1
+            erfasser = splited[index_bemerkungen - 2]
+            auftrag = splited[index_erfasser + 2]
+            datum = splited[index_erfasser + 3]
+            zeit = splited[index_erfasser + 4]
+            einsatz = splited[index_einsatz - 6]
+            sondersignal = splited[index_einsatz - 5]
+            ort = splited[index_einsatz - 3]
+            strasse = splited[index_einsatz - 2]
             if index_bemerkungen - index_erfasser == 10:
                 melder = splited[index_bemerkungen - 4] + ', ' + splited[index_bemerkungen - 3]
             else:
@@ -110,14 +140,11 @@ class PDFHandling:
             return False
 
         # sanity check to see if we can correlate the f_id
-        auftrag = splited[index_erfasser + 2]
         if f_id == auftrag:
             self.logger.info('[%s] ID matches in PDF', f_id)
         else:
             self.logger.error('[%s] ID does not match in PDF: "%s"', f_id, auftrag)
             return False
-
-
 
         # try to find out if there is a hinweis
         # if yes, the difference between the indexes is 4, else it's shorter
@@ -128,8 +155,8 @@ class PDFHandling:
 
         data = {
             'auftrag': auftrag,
-            'datum': splited[index_erfasser + 3],
-            'zeit': splited[index_erfasser + 4],
+            'datum': datum,
+            'zeit': zeit,
             'melder': melder,
             'erfasser': erfasser,
             'bemerkungen': self.concatenate_to_multiline_string(
@@ -137,10 +164,10 @@ class PDFHandling:
                 index_bemerkungen + 1,
                 index_bemerkungen + length_bemerkungen
             ).rstrip(),
-            'einsatz': splited[index_einsatz - 6],
-            'sondersignal': splited[index_einsatz - 5],
-            'ort': splited[index_einsatz - 3].title(),
-            'strasse': splited[index_einsatz - 2].title(),
+            'einsatz': einsatz,
+            'sondersignal': sondersignal,
+            'ort': ort.title(),
+            'strasse': strasse.title(),
             #'objekt': splited[],
             'hinweis': hinweis,
         }

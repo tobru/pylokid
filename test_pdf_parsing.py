@@ -5,7 +5,6 @@ from pathlib import Path
 from library.pdf_extract import PDFHandling
 
 PATH = '/tmp/pylokid'
-PATH = '/home/tobru/tmp/pylokid/Einsatzausdruck_FW'
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,5 +15,7 @@ PDF = PDFHandling()
 
 for path in Path(PATH).glob('**/*.pdf'):
     file = str(path)
+    print(file)
     f_id = re.search('.*(F[0-9]{8})_.*', file).group(1)
+    print(f_id)
     pprint(PDF.extract_einsatzausdruck(file, f_id))
