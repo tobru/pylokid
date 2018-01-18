@@ -29,11 +29,10 @@ class MQTTClient:
     def send_message(self, f_type, f_id, pdf_data=None, pdf_file=None):
         """ Publish a message over MQTT """
 
-        self.logger.info('[%s] Publishing information on MQTT topic %s*', f_id, topic)
-
         if f_type == 'Einsatzausdruck_FW':
             try:
                 topic = "{0}/Einsatzausdruck_FW/{1}/".format(self.base_topic, f_id)
+                self.logger.info('[%s] Publishing information on MQTT topic %s', f_id, topic)
                 self.mqtt_client.publish(topic + 'json', json.dumps(pdf_data))
 
                 ## Publish the PDF blob
@@ -44,4 +43,5 @@ class MQTTClient:
                 self.logger.info('[%s] Cannot publish information: %s', f_id, err)
         elif f_type == 'Einsatzprotokoll':
             topic = "{0}/Einsatzprotokoll/{1}/".format(self.base_topic, f_id)
+            self.logger.info('[%s] Publishing information on MQTT topic %s', f_id, topic)
             self.mqtt_client.publish(topic + 'json', '{}')
