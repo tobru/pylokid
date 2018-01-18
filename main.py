@@ -141,8 +141,6 @@ def main():
 
                 elif f_type == 'Einsatzprotokoll':
                     logger.info('[%s] Processing type %s', f_id, f_type)
-                    # Einsatz finished - publish on MQTT
-                    mqtt_client.send_message(f_type, f_id, pdf_data, pdf_file)
 
                     lodur_data = webdav_client.get_lodur_data(f_id)
                     if lodur_data:
@@ -154,14 +152,17 @@ def main():
                         )
 
                         # Parse the Einsatzprotokoll PDF
+                        pdf_file = os.path.join(TMP_DIR, file_name)
                         pdf_data = pdf.extract_einsatzprotokoll(
-                            os.path.join(TMP_DIR, file_name),
+                            pdf_file,
                             f_id,
                         )
 
                         # Update entry in Lodur with parse PDF data
                         lodur_client.einsatzprotokoll(f_id, pdf_data, webdav_client)
 
+                        # Einsatz finished - publish on MQTT
+                        mqtt_client.send_message(f_type, f_id, pdf_data, pdf_file)
                     else:
                         logger.error(
                             '[%s] Cannot process Einsatzprotokoll as there is no Lodur ID',
