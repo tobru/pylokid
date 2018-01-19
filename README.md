@@ -69,6 +69,27 @@ an Lodur gesendet werden, in einem JSON File im WebDAV neben den
 PDFs abgelegt. So lässt sich im Nachhinein ein Datensatz bearbeiten
 und eine Zuordnung des Einsatzes im WebDAV und in Lodur herstellen.
 
+## Dashboard
+
+Wird ein neuer Einsatz registriert (E-Mail mit dem Betreff
+"Einsatzausdruck_FW") published pylokid via MQTT Informationen
+über den Einsatz. Dazu sind folgende Topics vorgesehen:
+
+* `pylokid/Einsatzausdruck_FW/<f_id>/pdf`: Binary Blob mit PDF
+* `pylokid/Einsatzausdruck_FW/<f_id>/json`: Geparste Daten als JSON
+
+Ist der Einsatz beendet (E-Mail mit dem Betreff "Einsatzprotokoll")
+wird folgedes Topic published:
+
+* `pylokid/Einsatzprotokoll/<f_id>/json`: Leeres JSON
+
+Der Dashboard Client `dashboard_client.py` subscribed auf diese Topics
+und zeigt mittels `xpdf` das PDF im Vollbild an. Ist der Einsatz vorbei,
+wird das PDF wieder geschlossen.
+Dies kann z.B. auf einem Raspberry PI installiert werden und im Feuerwehr
+Depot an ein TV angeschlossen werden. Mit Hilfe von `cec-client` wird
+versucht den TV über HDMI einzuschalten.
+
 ## Installation and Configuration
 
 The application is written in Python and runs perfectly in OpenShift
@@ -108,7 +129,6 @@ Einsätze!
 
 * Generalize
 * IMAP Idle
-* Display PDF on Dashboard
 * Send statistics to InfluxDB
 * Webapp to see what's going on
 * Get as many data out of the PDFs as possible

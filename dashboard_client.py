@@ -51,6 +51,7 @@ def on_message(client, userdata, msg):
             )
         else:
             LOGGER.info("[%s] Displaying Einsatzausdruck with xpdf", f_id)
+            # TODO turn on TV with cec-client
             process = subprocess.Popen(
                 ["/usr/bin/xpdf", "-z", "width", "-fullscreen", file_name],
                 env=dict(os.environ, DISPLAY=":0")
