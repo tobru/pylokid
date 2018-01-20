@@ -38,7 +38,7 @@ def on_message(client, userdata, msg):
     f_id = topic_detail[2]
     if topic_detail[1] == 'Einsatzausdruck_FW' and topic_detail[3] == 'pdf':
         LOGGER.info("[%s] New Einsatzausdruck received", f_id)
-        file_name = TMP_DIR + "/dashboard/" + f_id + ".pdf"
+        file_name = TMP_DIR + "/dashboard_" + f_id + ".pdf"
         file = open(file_name, "wb")
         file.write(msg.payload)
         file.close()
