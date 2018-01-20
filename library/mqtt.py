@@ -44,4 +44,4 @@ class MQTTClient:
         elif f_type == 'Einsatzprotokoll':
             topic = "{0}/Einsatzprotokoll/{1}/".format(self.base_topic, f_id)
             self.logger.info('[%s] Publishing information on MQTT topic %s', f_id, topic)
-            self.mqtt_client.publish(topic + 'json', '{}')
+            self.mqtt_client.publish(topic + 'json', json.dumps(pdf_data))

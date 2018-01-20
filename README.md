@@ -79,9 +79,9 @@ Wird ein neuer Einsatz registriert (E-Mail mit dem Betreff
 * `pylokid/Einsatzausdruck_FW/<f_id>/json`: Geparste Daten als JSON
 
 Ist der Einsatz beendet (E-Mail mit dem Betreff "Einsatzprotokoll")
-wird folgedes Topic published:
+wird folgendes Topic published:
 
-* `pylokid/Einsatzprotokoll/<f_id>/json`: Leeres JSON
+* `pylokid/Einsatzprotokoll/<f_id>/json`: Geparste Daten als JSON
 
 Der Dashboard Client `dashboard_client.py` subscribed auf diese Topics
 und zeigt mittels `xpdf` das PDF im Vollbild an. Ist der Einsatz vorbei,
