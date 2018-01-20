@@ -68,14 +68,19 @@ class Lodur:
 
             # when PDF parsing fails, pdf_data is false. fill with tbd when this happens
             if pdf_data:
-                zh_fw_ausg = datetime.strptime(
-                    pdf_data['ausgerueckt'],
-                    '%H:%M',
-                )
-                zh_am_schad = datetime.strptime(
-                    pdf_data['anort'],
-                    '%H:%M',
-                )
+                try:
+                    zh_fw_ausg = datetime.strptime(
+                        pdf_data['ausgerueckt'],
+                        '%H:%M',
+                    )
+                    zh_am_schad = datetime.strptime(
+                        pdf_data['anort'],
+                        '%H:%M',
+                    )
+                except ValueError as err:
+                    self.logger.error('[%s] Date parsing failed: %s', f_id, err)
+                    zh_fw_ausg = datetime.now()
+                    zh_am_schad = datetime.now()
             else:
                 # Do nothing when no PDF data - we don't have anything to do then
                 self.logger.error('[%s] No PDF data found - filling in dummy data', f_id)
