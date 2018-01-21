@@ -15,6 +15,7 @@ MQTT_SERVER = os.getenv("MQTT_SERVER")
 MQTT_USER = os.getenv("MQTT_USER")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
 MQTT_BASE_TOPIC = os.getenv("MQTT_BASE_TOPIC", "pylokid")
+CEC_ENABLED = os.getenv("CEC_ENABLED", "yes")
 TMP_DIR = os.getenv("TMP_DIR", "/tmp")
 
 # Initialization
@@ -57,6 +58,22 @@ def on_message(client, userdata, msg):
                 env=dict(os.environ, DISPLAY=":0")
             )
             PIDS[f_id] = process.pid
+
+            if CEC_ENABLED == "yes":
+                # Check power state of TV
+                status = subprocess.run(
+                    ["/usr/bin/cec-client", "-s", "-d", "1"],
+                    stdout=subprocess.PIPE,
+                    input=b'pow 0').stdout
+                if status.splitlines()[1] == b'power status: standby':
+                    LOGGER.info("[%s] CEC power status: standby. Powering TV on", f_id)
+                    subprocess.run(
+                        ["/usr/bin/cec-client", "-s", "-d", "1"],
+                        stdout=subprocess.PIPE,
+                        input=b'on 0'
+                    )
+                else:
+                    LOGGER.info("[%s] CEC power status: probably on", f_id)
     elif topic_detail[1] == 'Einsatzprotokoll':
         LOGGER.info("[%s] New Einsatzprotokoll received", f_id)
         if f_id in PIDS:
@@ -65,6 +82,16 @@ def on_message(client, userdata, msg):
             PIDS.pop(f_id)
         else:
             LOGGER.info("[%s] No xpdf PID found", f_id)
+
+        if CEC_ENABLED == "yes":
+            # Turn off TV if no xpdf running anymore
+            if not PIDS:
+                LOGGER.info("[%s] No xpdf running anymore. Powering TV off", f_id)
+                subprocess.run(
+                    ["/usr/bin/cec-client", "-s", "-d", "1"],
+                    stdout=subprocess.PIPE,
+                    input=b'standby 0'
+                )
     else:
         LOGGER.info("[%s] Unknown", topic_detail[1])
 
