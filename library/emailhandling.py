@@ -33,13 +33,17 @@ class EmailHandling:
         """ searches for emails matching the configured subject """
 
         self.logger.info('Searching for messages matching the subject')
-        typ, msg_ids = self.imap.search(
-            None,
-            _EMAIL_SUBJECTS,
-        )
-        if typ != 'OK':
-            self.logger.error('Error searching for matching messages')
-            return False
+        try:
+            typ, msg_ids = self.imap.search(
+                None,
+                _EMAIL_SUBJECTS,
+            )
+            if typ != 'OK':
+                self.logger.error('Error searching for matching messages')
+                return False
+        except imaplib.IMAP4.abort as err:
+            self.logger.error('IMAP search aborted - exiting: %s', str(err))
+            raise SystemExit(1)
 
         num_messages = len(msg_ids[0].split())
         self.logger.info('Found %s matching messages', str(num_messages))
