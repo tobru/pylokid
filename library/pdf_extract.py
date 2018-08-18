@@ -69,7 +69,8 @@ class PDFHandling:
         converted = self.convert(file)
         splited = converted.splitlines()
 
-        self.logger.debug('[%s] Parsed PDF raw: %s', f_id, converted)
+        self.logger.debug('[%s] Parsed PDF raw:\n %s', f_id, converted)
+        self.logger.debug('[%s] Line-splited PDF: %s', f_id, splited)
 
         # search some well-known words for later positional computation
         try:
@@ -81,14 +82,14 @@ class PDFHandling:
             index_einsatz = splited.index('Einsatz')
             index_hinweis = splited.index('Hinweis')
             index_maps = splited.index('Google Maps')
-        except ValueError:
-            self.logger.error('[%s] PDF file does not look like a Einsatzausdruck', f_id)
+        except ValueError as err:
+            self.logger.error('[%s] PDF file does not look like a Einsatzausdruck: %s', f_id, err)
             return False
 
         # the PDF parsing not always produces the same output
         # let's define the already known output
         if index_bemerkungen == 6:
-            self.logger.info('[%s] Found Bemerkungen on line 6', f_id)
+            self.logger.info('[%s] Found Bemerkungen on line %s', f_id, index_bemerkungen)
             # get length of bemerkungen field
             # it lives between the line which contains 'Bemerkungen' and
             # the line 'Disponierte Einheiten'
@@ -109,7 +110,7 @@ class PDFHandling:
                 melder = splited[index_dispo - 4]
         # BMA style
         elif index_bemerkungen == 20:
-            self.logger.info('[%s] Found Bemerkungen on line 20', f_id)
+            self.logger.info('[%s] Found Bemerkungen on line %s', f_id, index_bemerkungen)
             length_bemerkungen = index_dispo - index_bemerkungen - 1
             erfasser = splited[index_bemerkungen - 2]
             auftrag = splited[index_einsatzauftragfw + 2]
@@ -121,7 +122,7 @@ class PDFHandling:
             strasse = splited[index_einsatz + 10]
             melder = 'BMA' # There is no melder on a BMA Einsatzausdruck
         elif index_bemerkungen == 21 or index_bemerkungen == 22:
-            self.logger.info('[%s] Found Bemerkungen on line 21 or 22', f_id)
+            self.logger.info('[%s] Found Bemerkungen on line %s', f_id, index_bemerkungen)
             length_bemerkungen = index_dispo - index_bemerkungen - 1
             erfasser = splited[index_bemerkungen - 2]
             auftrag = splited[index_erfasser + 2]
@@ -135,8 +136,20 @@ class PDFHandling:
                 melder = splited[index_bemerkungen - 4] + ', ' + splited[index_bemerkungen - 3]
             else:
                 melder = splited[index_bemerkungen - 4]
+        elif index_bemerkungen == 24:
+            self.logger.info('[%s] Found Bemerkungen on line %s', f_id, index_bemerkungen)
+            length_bemerkungen = index_dispo - index_bemerkungen - 1
+            erfasser = splited[index_bemerkungen - 2]
+            auftrag = splited[index_einsatzauftragfw + 4]
+            datum = splited[index_einsatzauftragfw + 9]
+            zeit = splited[index_einsatzauftragfw + 10]
+            einsatz = splited[index_einsatz - 4]
+            sondersignal = splited[index_einsatz - 3]
+            ort = ''
+            strasse = splited[index_einsatz - 2]
+            melder = splited[index_dispo - 8] + ', ' + splited[index_dispo - 7]
         else:
-            self.logger.error('[%s] Unknown parser output', f_id)
+            self.logger.error('[%s] Unknown location of Bemerkungen. Line %s', f_id, index_bemerkungen)
             return False
 
         # sanity check to see if we can correlate the f_id
