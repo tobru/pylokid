@@ -1,0 +1,8 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: build
+    image: docker:stable-dind
+    commands:
+      - docker build -t tobru/pylokid .
