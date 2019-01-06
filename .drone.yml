@@ -2,7 +2,12 @@ kind: pipeline
 name: default
 
 steps:
-  - name: build
-    image: docker:stable-dind
-    commands:
-      - docker build -t tobru/pylokid .
+  - name: docker
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: username
+      password:
+        from_secret: password
+      repo: tobru/pylokid
+      auto_tag: true
