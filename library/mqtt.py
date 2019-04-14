@@ -19,11 +19,10 @@ class MQTTClient:
             self.mqtt_client.tls_set()
             self.mqtt_client.connect(server, 8883, 60)
             self.mqtt_client.loop_start()
+            self.logger.info('MQTT connection successfull')
         except Exception as err:
-            self.logger.error('MQTT connection failed - exiting: %s', str(err))
-            raise SystemExit(1)
+            self.logger.error('MQTT connection failed: %s', str(err))
 
-        self.logger.info('MQTT connection successfull')
         self.base_topic = base_topic
 
     def send_message(self, f_type, f_id, pdf_data=None, pdf_file=None):

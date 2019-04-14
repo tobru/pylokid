@@ -36,6 +36,7 @@ LODUR_USER = os.getenv("LODUR_USER")
 LODUR_PASSWORD = os.getenv("LODUR_PASSWORD")
 LODUR_BASE_URL = os.getenv("LODUR_BASE_URL")
 HEARTBEAT_URL = os.getenv("HEARTBEAT_URL")
+PYLOKID_VERSION = "1.1.0"
 
 def main():
     """ main """
@@ -46,6 +47,7 @@ def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     logger = logging.getLogger('pylokid')
+    logger.info('Starting pylokid version %s', PYLOKID_VERSION)
 
     # Initialize IMAP Session
     imap_client = EmailHandling(
