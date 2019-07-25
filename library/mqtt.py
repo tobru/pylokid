@@ -19,7 +19,7 @@ class MQTTClient:
             self.mqtt_client.tls_set()
             self.mqtt_client.connect(server, 8883, 60)
             self.mqtt_client.loop_start()
-            self.logger.info('MQTT connection successfull')
+            self.logger.info('MQTT connection successful')
         except Exception as err:
             self.logger.error('MQTT connection failed: %s', str(err))
 

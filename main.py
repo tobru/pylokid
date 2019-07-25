@@ -13,6 +13,7 @@ from dotenv import find_dotenv, load_dotenv
 from library.emailhandling import EmailHandling
 from library.lodur import Lodur
 from library.mqtt import MQTTClient
+from library.gotify import GotifyClient
 from library.pdf_extract import PDFHandling
 from library.webdav import WebDav
 
@@ -36,7 +37,9 @@ LODUR_USER = os.getenv("LODUR_USER")
 LODUR_PASSWORD = os.getenv("LODUR_PASSWORD")
 LODUR_BASE_URL = os.getenv("LODUR_BASE_URL")
 HEARTBEAT_URL = os.getenv("HEARTBEAT_URL")
-PYLOKID_VERSION = "1.1.0"
+GOTIFY_URL = os.getenv("GOTIFY_URL")
+GOTIFY_TOKEN = os.getenv("GOTIFY_TOKEN")
+PYLOKID_VERSION = "1.2.0"
 
 def main():
     """ main """
@@ -82,6 +85,12 @@ def main():
         MQTT_BASE_TOPIC,
     )
 
+    # Initialize Gotify
+    gotify_client = GotifyClient(
+        GOTIFY_URL,
+        GOTIFY_TOKEN,
+    )
+
     # Initialize PDF Parser
     pdf = PDFHandling()
 
@@ -124,8 +133,9 @@ def main():
                             f_id,
                         )
 
-                        # publish Einsatz on MQTT
+                        # publish Einsatz on MQTT and Gotify
                         mqtt_client.send_message(f_type, f_id, pdf_data, pdf_file)
+                        gotify_client.send_message(f_type, f_id, pdf_data, pdf_file)
 
                         # create new Einsatzrapport in Lodur
                         lodur_client.einsatzrapport(
@@ -163,8 +173,9 @@ def main():
                         # Update entry in Lodur with parse PDF data
                         lodur_client.einsatzprotokoll(f_id, pdf_data, webdav_client)
 
-                        # Einsatz finished - publish on MQTT
+                        # Einsatz finished - publish on MQTT and Gotify
                         mqtt_client.send_message(f_type, f_id, pdf_data, pdf_file)
+                        gotify_client.send_message(f_type, f_id, pdf_data, pdf_file)
                     else:
                         logger.error(
                             '[%s] Cannot process Einsatzprotokoll as there is no Lodur ID',
