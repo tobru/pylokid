@@ -38,10 +38,8 @@ pylokid funktioniert so:
 * Ist der Einsatz abgeschlossen und das Einsatzprotokoll eingetroffen
   werden die Informationen im Lodur nachgetragen.
 
-Desweiteren wird über MQTT eine Nachricht mit möglichst vielen
-Informationen publiziert, inkl. dem PDF. So kann ein Drittsystem
-auf einen Einsatz reagieren, z.B. den Einsatz auf einem Dashboard
-darstellen.
+Desweiteren wird über Pushover eine Nachricht mit möglichst vielen
+Informationen publiziert.
 
 ## Stolpersteine / Herausforderungen
 
@@ -69,31 +67,9 @@ an Lodur gesendet werden, in einem JSON File im WebDAV neben den
 PDFs abgelegt. So lässt sich im Nachhinein ein Datensatz bearbeiten
 und eine Zuordnung des Einsatzes im WebDAV und in Lodur herstellen.
 
-## Dashboard
-
-Wird ein neuer Einsatz registriert (E-Mail mit dem Betreff
-"Einsatzausdruck_FW") published pylokid via MQTT Informationen
-über den Einsatz. Dazu sind folgende Topics vorgesehen:
-
-* `pylokid/Einsatzausdruck_FW/<f_id>/pdf`: Binary Blob mit PDF
-* `pylokid/Einsatzausdruck_FW/<f_id>/json`: Geparste Daten als JSON
-
-Ist der Einsatz beendet (E-Mail mit dem Betreff "Einsatzprotokoll")
-wird folgendes Topic published:
-
-* `pylokid/Einsatzprotokoll/<f_id>/json`: Geparste Daten als JSON
-
-Der Dashboard Client `dashboard_client.py` subscribed auf diese Topics
-und zeigt mittels `xpdf` das PDF im Vollbild an. Ist der Einsatz vorbei,
-wird das PDF wieder geschlossen.
-Dies kann z.B. auf einem Raspberry PI installiert werden und im Feuerwehr
-Depot an ein TV angeschlossen werden. Mit Hilfe von `cec-client` wird
-versucht den TV über HDMI einzuschalten.
-
 ## Installation and Configuration
 
-The application is written in Python and runs perfectly in OpenShift
-with the Python S2I builder.
+The application is written in Python and runs perfectly on Kubernetes.
 
 Configuration is done via environment variables:
 
@@ -107,25 +83,16 @@ Configuration is done via environment variables:
 * *WEBDAV_PASSWORD*: Password of WebDAV user
 * *WEBDAV_BASEDIR*: Basedir on WebDAV
 * *TMP_DIR*: Temporary directory. Default: /tmp
-* *MQTT_SERVER*: Address of MQTT Broker
-* *MQTT_USER*: Username for MQTT login
-* *MQTT_PASSWORD*: Password of MQTT user
-* *MQTT_BASE_TOPIC*: Base topic to publish information
 * *LODUR_USER*: Username for Lodur login
 * *LODUR_PASSWORD*: Password of Lodur user
 * *LODUR_BASE_URL*: Lodur base URL
 * *HEARTBEAT_URL*: URL to send Hearbeat to (https://hchk.io/)
+* *PUSHOVER_API_TOKEN*: Pushover API token
+* *PUSHOVER_USER_KEY*: Pushover User key
 
 Environment variables can also be stored in a `.env` file.
 
 ## TODO
-
-### Version 1
-
-Before version 1 can be tagged, it must have processed at least 10 real
-Einsätze!
-
-### Future versions
 
 * Generalize
 * IMAP Idle
@@ -195,3 +162,11 @@ _03. Verrechnungsart_
 <option value="13" rc-id="ak">ADL-/HRF-Einsatz BRAND (ADL = OFW-Fahrzeug)</option>
 <option value="15" rc-id="tt">Grosstierrettung Stützpunkt (PIF mit Kran)</option>
 ```
+
+## Notes
+
+### Local dev stuff
+
+`docker run --rm -ti -v $(pwd):/usr/src/pylokid:ro local/pylokid`
+
+`find ./ -name "Einsatzausdruck_FW*.pdf" -exec pdftotext -f 1 -l 1 -x 70 -y 47 -W 50 -H 10 {} - \;`
