@@ -39,7 +39,7 @@ LODUR_BASE_URL = os.getenv("LODUR_BASE_URL")
 HEARTBEAT_URL = os.getenv("HEARTBEAT_URL")
 GOTIFY_URL = os.getenv("GOTIFY_URL")
 GOTIFY_TOKEN = os.getenv("GOTIFY_TOKEN")
-PYLOKID_VERSION = "1.2.0"
+PYLOKID_VERSION = "2.0.0"
 
 def main():
     """ main """

@@ -14,6 +14,8 @@ class PDFParsing:
 
     def extract(self, f_id, file, datafields):
 
+        self.logger.info('[%s] parsing PDF file %s', f_id, file)
+
         data = {}
 
         for field, coordinate in datafields.items():

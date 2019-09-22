@@ -1,5 +1,7 @@
 aioeasywebdav==2.4.0
-MechanicalSoup==0.12.0
+# MechanicalSoup > 0.11.0 produces "TypeError: expected string or bytes-like
+# object" on file upload
+MechanicalSoup==0.11.0
 paho-mqtt==1.3.1
 python-dotenv==0.10.3
 requests>=2.20.0
