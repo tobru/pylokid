@@ -14,7 +14,7 @@ from library.emailhandling import EmailHandling
 from library.lodur import Lodur
 from library.mqtt import MQTTClient
 from library.gotify import GotifyClient
-from library.pdf_extract import PDFHandling
+from library.pdftotext import PDFParsing
 from library.webdav import WebDav
 
 # Configuration
@@ -92,7 +92,7 @@ def main():
     )
 
     # Initialize PDF Parser
-    pdf = PDFHandling()
+    pdf = PDFParsing()
 
     # Main Loop
     while True:

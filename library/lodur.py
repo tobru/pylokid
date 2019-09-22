@@ -74,7 +74,7 @@ class Lodur:
                         '%H:%M',
                     )
                     zh_am_schad = datetime.strptime(
-                        pdf_data['anort'],
+                        pdf_data['vorort'],
                         '%H:%M',
                     )
                 except ValueError as err:
@@ -120,9 +120,9 @@ class Lodur:
                 '%H:%M',
             )
             eins_ereig = pdf_data['einsatz']
-            bemerkungen = pdf_data['bemerkungen']
+            bemerkungen = pdf_data['bemerkungen'] + '\n' + pdf_data['disponierteeinheiten']
             wer_ala = pdf_data['melder']
-            adr = pdf_data['strasse'] + ', ' + pdf_data['ort']
+            adr = pdf_data['ort']
         else:
             date = datetime.now()
             time = datetime.now()
