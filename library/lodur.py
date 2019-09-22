@@ -71,11 +71,11 @@ class Lodur:
                 try:
                     zh_fw_ausg = datetime.strptime(
                         pdf_data['ausgerueckt'],
-                        '%H:%M',
+                        '%H:%M:%S',
                     )
                     zh_am_schad = datetime.strptime(
-                        pdf_data['anort'],
-                        '%H:%M',
+                        pdf_data['vorort'],
+                        '%H:%M:%S',
                     )
                 except ValueError as err:
                     self.logger.error('[%s] Date parsing failed: %s', f_id, err)
@@ -120,9 +120,9 @@ class Lodur:
                 '%H:%M',
             )
             eins_ereig = pdf_data['einsatz']
-            bemerkungen = pdf_data['bemerkungen']
+            bemerkungen = pdf_data['bemerkungen'] + '\n' + pdf_data['disponierteeinheiten']
             wer_ala = pdf_data['melder']
-            adr = pdf_data['strasse'] + ', ' + pdf_data['ort']
+            adr = pdf_data['ort']
         else:
             date = datetime.now()
             time = datetime.now()
@@ -229,6 +229,7 @@ class Lodur:
             # Encoding bk causes some troubles - therefore we skip that - but it
             # would be good if it would be encoded as it can / will contain f.e.abs
             # Umlauts
+            # AttributeError: 'bytes' object has no attribute 'parent'
             self.logger.info('Form data: %s = %s', key, value)
             if key in ('eins_ereig', 'adr', 'wer_ala'):
                 self.browser[key] = value.encode('iso-8859-1')
