@@ -8,12 +8,11 @@ import time
 
 import requests
 from dotenv import find_dotenv, load_dotenv
+from pushover import Client
 
 # local classes
 from library.emailhandling import EmailHandling
 from library.lodur import Lodur
-from library.mqtt import MQTTClient
-from library.gotify import GotifyClient
 from library.pdftotext import PDFParsing
 from library.webdav import WebDav
 
@@ -29,16 +28,12 @@ WEBDAV_USERNAME = os.getenv("WEBDAV_USERNAME")
 WEBDAV_PASSWORD = os.getenv("WEBDAV_PASSWORD")
 WEBDAV_BASEDIR = os.getenv("WEBDAV_BASEDIR")
 TMP_DIR = os.getenv("TMP_DIR", "/tmp")
-MQTT_SERVER = os.getenv("MQTT_SERVER")
-MQTT_USER = os.getenv("MQTT_USER")
-MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
-MQTT_BASE_TOPIC = os.getenv("MQTT_BASE_TOPIC", "pylokid")
 LODUR_USER = os.getenv("LODUR_USER")
 LODUR_PASSWORD = os.getenv("LODUR_PASSWORD")
 LODUR_BASE_URL = os.getenv("LODUR_BASE_URL")
 HEARTBEAT_URL = os.getenv("HEARTBEAT_URL")
-GOTIFY_URL = os.getenv("GOTIFY_URL")
-GOTIFY_TOKEN = os.getenv("GOTIFY_TOKEN")
+PUSHOVER_API_TOKEN = os.getenv("PUSHOVER_API_TOKEN")
+PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY")
 PYLOKID_VERSION = "2.0.0"
 
 def main():
@@ -77,18 +72,10 @@ def main():
         TMP_DIR,
     )
 
-    # Initialize MQTT Sessions
-    mqtt_client = MQTTClient(
-        MQTT_SERVER,
-        MQTT_USER,
-        MQTT_PASSWORD,
-        MQTT_BASE_TOPIC,
-    )
-
-    # Initialize Gotify
-    gotify_client = GotifyClient(
-        GOTIFY_URL,
-        GOTIFY_TOKEN,
+    # Initialize Pushover
+    pushover = Client(
+        user_key=PUSHOVER_USER_KEY,
+        api_token=PUSHOVER_API_TOKEN
     )
 
     # Initialize PDF Parser
@@ -133,9 +120,25 @@ def main():
                             f_id,
                         )
 
-                        # publish Einsatz on MQTT and Gotify
-                        mqtt_client.send_message(f_type, f_id, pdf_data, pdf_file)
-                        gotify_client.send_message(f_type, f_id, pdf_data, pdf_file)
+                        # publish Einsatz on Pushover
+                        logger.info(
+                            '[%s] Publishing message on Pushover', f_id
+                        )
+                        pushover.send_message(
+                            "Einsatz {} eröffnet: {}\n\n* Ort: {}\n* Melder: {}\n* Hinweis: {}\n* {}\n\n{}\n\n{}".format(
+                                f_id,
+                                pdf_data['einsatz'],
+                                pdf_data['ort'],
+                                pdf_data['melder'].replace('\n',' '),
+                                pdf_data['hinweis'],
+                                pdf_data['sondersignal'],
+                                pdf_data['disponierteeinheiten'],
+                                pdf_data['bemerkungen'],
+                            ),
+                            title="Feuerwehr Einsatz",
+                            url="https://www.google.com/maps/search/?api=1&query={}".format(pdf_data['ort']),
+                            url_title="Ort auf Karte suchen"
+                        )
 
                         # create new Einsatzrapport in Lodur
                         lodur_client.einsatzrapport(
@@ -173,9 +176,15 @@ def main():
                         # Update entry in Lodur with parse PDF data
                         lodur_client.einsatzprotokoll(f_id, pdf_data, webdav_client)
 
-                        # Einsatz finished - publish on MQTT and Gotify
-                        mqtt_client.send_message(f_type, f_id, pdf_data, pdf_file)
-                        gotify_client.send_message(f_type, f_id, pdf_data, pdf_file)
+                        # Einsatz finished - publish on pushover
+                        logger.info(
+                            '[%s] Publishing message on Pushover', f_id
+                        )
+                        pushover.send_message(
+                            "Einsatz {} beendet".format(f_id),
+                            title="Feuerwehr Einsatz beendet",
+                        )
+
                     else:
                         logger.error(
                             '[%s] Cannot process Einsatzprotokoll as there is no Lodur ID',
