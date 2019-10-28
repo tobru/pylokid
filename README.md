@@ -37,6 +37,9 @@ pylokid funktioniert so:
   diese im Lodur am entsprechenden Einsatzrapport angehängt.
 * Ist der Einsatz abgeschlossen und das Einsatzprotokoll eingetroffen
   werden die Informationen im Lodur nachgetragen.
+* Wird der von Hand ausgefüllte Einsatzrapport via Scanner per E-Mail
+  an das E-Mail Postfach gesendet (Betreff "Attached Image FXXXXXXXX")
+  wird das PDF in der Cloud und im Lodur gespeichert.
 
 Desweiteren wird über Pushover eine Nachricht mit möglichst vielen
 Informationen publiziert.

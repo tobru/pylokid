@@ -9,7 +9,7 @@ import email
 import email.parser
 import imaplib
 
-_EMAIL_SUBJECTS = '(OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" UNSEEN)'
+_EMAIL_SUBJECTS = '(OR OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" SUBJECT "Attached Image" UNSEEN)'
 
 class EmailHandling:
     """ Email handling """
@@ -32,7 +32,7 @@ class EmailHandling:
     def search_emails(self):
         """ searches for emails matching the configured subject """
 
-        self.logger.info('Searching for messages matching the subject')
+        self.logger.info('Searching for messages matching: %s', _EMAIL_SUBJECTS)
         try:
             typ, msg_ids = self.imap.search(
                 None,
@@ -102,7 +102,8 @@ class EmailHandling:
     def parse_subject(self, subject):
         """ extract f id and type from subject """
 
-        parsed = re.search('(.*): (F[0-9].*)', subject)
+        # This regex matches the subjects filtered already in IMAP search
+        parsed = re.search('([a-zA-Z]* ?[a-zA-Z]*):? ?(F[0-9].*)?', subject)
         f_type = parsed.group(1)
         f_id = parsed.group(2)
 

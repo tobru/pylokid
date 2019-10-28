@@ -34,7 +34,7 @@ LODUR_BASE_URL = os.getenv("LODUR_BASE_URL")
 HEARTBEAT_URL = os.getenv("HEARTBEAT_URL")
 PUSHOVER_API_TOKEN = os.getenv("PUSHOVER_API_TOKEN")
 PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY")
-PYLOKID_VERSION = "2.0.0"
+PYLOKID_VERSION = "2.1.0"
 
 def main():
     """ main """
@@ -92,6 +92,8 @@ def main():
             for subject in attachments:
                 f_type, f_id = imap_client.parse_subject(subject)
                 file_name = attachments[subject]
+
+                # Upload file to cloud
                 webdav_client.upload(file_name, f_id)
 
                 # Take actions - depending on the type
@@ -191,6 +193,28 @@ def main():
                             f_id
                         )
 
+                # This is a scan from the Depot printer
+                elif f_type == 'Attached Image':
+                    logger.info('[%s] Processing type %s', f_id, f_type)
+
+                    # Attach scan in Lodur if f_id is available
+                    if f_id != None:
+                        lodur_data = webdav_client.get_lodur_data(f_id)
+                        if lodur_data:
+                            # Upload scan to Lodur
+                            lodur_client.einsatzrapport_alarmdepesche(
+                                f_id,
+                                os.path.join(TMP_DIR, file_name),
+                                webdav_client,
+                            )
+
+                    logger.info(
+                        '[%s] Publishing message on Pushover', f_id
+                    )
+                    pushover.send_message(
+                        "Scan {} wurde bearbeitet und in Cloud geladen".format(f_id),
+                        title="Feuerwehr Scan bearbeitet",
+                    )
                 else:
                     logger.error('[%s] Unknown type: %s', f_id, f_type)
 

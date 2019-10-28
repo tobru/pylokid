@@ -34,7 +34,11 @@ class WebDav:
         """ uploads a file to webdav - checks for existence before doing so """
 
         # upload with webdav
-        remote_upload_dir = self.webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
+        if f_id == None:
+            remote_upload_dir = self.webdav_basedir + "/Inbox"
+        else:
+            remote_upload_dir = self.webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
+
         self.logger.info('[%s] Uploading file to WebDAV "%s"', f_id, remote_upload_dir)
 
         # create directory if not yet there

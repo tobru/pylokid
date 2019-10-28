@@ -176,7 +176,7 @@ class Lodur:
     def einsatzrapport_alarmdepesche(self, f_id, file_path, webdav_client):
         """ Upload a file to Alarmdepesche """
 
-        self.logger.info('[%s] Submitting Alarmdepesche to Lodur', f_id)
+        self.logger.info('[%s] Submitting File to Lodur "Alarmdepesche"', f_id)
 
         # Login to lodur
         self.login()
@@ -193,7 +193,7 @@ class Lodur:
 
         # Submit the form
         self.browser.submit_selected()
-        self.logger.info('[%s] Alarmdepesche submitted', f_id)
+        self.logger.info('[%s] File uploaded', f_id)
 
     def submit_form_einsatzrapport(self, lodur_data):
         """ Form in module 36 - Einsatzrapport """
