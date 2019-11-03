@@ -9,7 +9,7 @@ import email
 import email.parser
 import imaplib
 
-_EMAIL_SUBJECTS = '(OR OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" SUBJECT "Attached Image" UNSEEN)'
+_EMAIL_SUBJECTS = '(OR OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" SUBJECT "Einsatzrapport" UNSEEN)'
 
 class EmailHandling:
     """ Email handling """
@@ -103,7 +103,7 @@ class EmailHandling:
         """ extract f id and type from subject """
 
         # This regex matches the subjects filtered already in IMAP search
-        parsed = re.search('([a-zA-Z]* ?[a-zA-Z]*):? ?(F[0-9].*)?', subject)
+        parsed = re.search('([a-zA-Z_]*):? ?(F[0-9].*)?', subject)
         f_type = parsed.group(1)
         f_id = parsed.group(2)
 

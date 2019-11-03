@@ -195,6 +195,35 @@ class Lodur:
         self.browser.submit_selected()
         self.logger.info('[%s] File uploaded', f_id)
 
+    def einsatzrapport_scan(self, f_id, file_path, webdav_client):
+        """ Prepare Einsatzrapport Scan to be sent to Lodur """
+
+        # check if data is already sent to lodur - data contains lodur_id
+        lodur_data = webdav_client.get_lodur_data(f_id)
+
+        if lodur_data:
+            # einsatz available in Lodur - updating existing entry
+            self.logger.info('[%s] Lodur data found - updating entry', f_id)
+
+            # Complement existing form data
+            self.logger.info('[%s] Preparing form data for Einsatzprotokoll', f_id)
+            lodur_data['ang_sit'] = 'Siehe Alarmdepesche - Einsatzrapport' # 17. Angetroffene Situation
+            lodur_data['mn'] = 'Siehe Alarmdepesche - Einsatzrapport' # 19. Massnahmen
+
+            # Submit the form
+            self.submit_form_einsatzrapport(lodur_data)
+
+            # Upload scan to Alarmdepesche
+            self.einsatzrapport_alarmdepesche(
+                f_id,
+                file_path,
+                webdav_client,
+            )
+        else:
+            # einsatz not available in Lodur
+            self.logger.error('[%s] No lodur_id found')
+            return False
+
     def submit_form_einsatzrapport(self, lodur_data):
         """ Form in module 36 - Einsatzrapport """
 

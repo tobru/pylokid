@@ -34,7 +34,7 @@ LODUR_BASE_URL = os.getenv("LODUR_BASE_URL")
 HEARTBEAT_URL = os.getenv("HEARTBEAT_URL")
 PUSHOVER_API_TOKEN = os.getenv("PUSHOVER_API_TOKEN")
 PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY")
-PYLOKID_VERSION = "2.1.0"
+PYLOKID_VERSION = "2.1.1"
 
 def main():
     """ main """
@@ -175,7 +175,7 @@ def main():
                             f_id,
                         )
 
-                        # Update entry in Lodur with parse PDF data
+                        # Update entry in Lodur with parsed PDF data
                         lodur_client.einsatzprotokoll(f_id, pdf_data, webdav_client)
 
                         # Einsatz finished - publish on pushover
@@ -193,24 +193,19 @@ def main():
                             f_id
                         )
 
-                # This is a scan from the Depot printer
-                elif f_type == 'Attached Image':
+                # This is usually a scan from the Depot printer
+                elif f_type == 'Einsatzrapport':
                     logger.info('[%s] Processing type %s', f_id, f_type)
 
                     # Attach scan in Lodur if f_id is available
                     if f_id != None:
-                        lodur_data = webdav_client.get_lodur_data(f_id)
-                        if lodur_data:
-                            # Upload scan to Lodur
-                            lodur_client.einsatzrapport_alarmdepesche(
-                                f_id,
-                                os.path.join(TMP_DIR, file_name),
-                                webdav_client,
-                            )
+                        pdf_file = os.path.join(TMP_DIR, file_name)
+                        lodur_client.einsatzrapport_scan(f_id, pdf_file, webdav_client)
 
                     logger.info(
                         '[%s] Publishing message on Pushover', f_id
                     )
+
                     pushover.send_message(
                         "Scan {} wurde bearbeitet und in Cloud geladen".format(f_id),
                         title="Feuerwehr Scan bearbeitet",
