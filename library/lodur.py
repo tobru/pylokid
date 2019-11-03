@@ -101,6 +101,10 @@ class Lodur:
 
             # Submit the form
             self.submit_form_einsatzrapport(lodur_data)
+
+            # save lodur data to webdav
+            webdav_client.store_lodur_data(f_id, lodur_data)
+
         else:
             # einsatz not available in Lodur
             self.logger.error('[%s] No lodur_id found')
