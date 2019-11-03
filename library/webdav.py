@@ -30,7 +30,7 @@ class WebDav:
 
         self.logger.info('WebDAV connection successfull')
 
-    def upload(self, file_name, f_id):
+    def upload(self, file_name, f_id, check_exists = True):
         """ uploads a file to webdav - checks for existence before doing so """
 
         # upload with webdav
@@ -47,7 +47,7 @@ class WebDav:
             self.loop.run_until_complete(self.webdav.mkdir(remote_upload_dir))
 
         remote_file_path = remote_upload_dir + "/" + file_name
-        if self.loop.run_until_complete(self.webdav.exists(remote_file_path)):
+        if check_exists and self.loop.run_until_complete(self.webdav.exists(remote_file_path)):
             self.logger.info('[%s] File "%s" already exists on WebDAV', f_id, file_name)
         else:
             self.loop.run_until_complete(
@@ -79,7 +79,7 @@ class WebDav:
         file.close()
 
         self.logger.info('[%s] Stored Lodur data locally in %s', f_id, file_path)
-        self.upload(file_name, f_id)
+        self.upload(file_name, f_id, False)
 
     def get_lodur_data(self, f_id):
         """ gets lodur data if it exists """
