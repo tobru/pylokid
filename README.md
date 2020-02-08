@@ -17,6 +17,8 @@ Bei Interesse an dieser Applikation von anderen Feuerwehren bin ich
 gerne bereit, diese entsprechend zu generalisieren und
 [weiter zu entwickeln](https://github.com/tobru/pylokid/issues/new).
 
+[![Build Status](https://drone.tbrnt.ch/api/badges/tobru/pylokid/status.svg)](https://drone.tbrnt.ch/tobru/pylokid)
+
 ## Funktionsweise
 
 Bei einem Feuerwehralarm sendet die ELZ automatisch eine E-Mail
