@@ -95,16 +95,6 @@ Configuration is done via environment variables:
 
 Environment variables can also be stored in a `.env` file.
 
-## TODO
-
-* Generalize
-* IMAP Idle
-* Send statistics to InfluxDB
-* Webapp to see what's going on
-* Get as many data out of the PDFs as possible
-* Simple webform to fill-in missing data (skipping Lodur completely)
-  * Webapp for chosing who was there during the Einsatz (tablet ready)
-
 ## WCPGW
 
 What could possibly go wrong? A lot!

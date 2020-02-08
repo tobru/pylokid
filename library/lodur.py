@@ -5,6 +5,7 @@
 import re
 import logging
 from datetime import datetime
+from datetime import timedelta
 import mechanicalsoup
 
 class Lodur:
@@ -135,6 +136,15 @@ class Lodur:
             wer_ala = 'UNKNOWN'
             adr = 'UNKNOWN'
 
+        # Prepare end date and time, can cross midnight
+        # We blindly add 1 hours - that's the usual length of an Einsatz
+        time_end = time + timedelta(hours=1)
+        # check if date is higher after adding 1 hour, this means we crossed midnight
+        if datetime.date(time_end) > datetime.date(time):
+            date_end = date + timedelta(days=1)
+        else:
+            date_end = date
+
         # Fill in form data
         self.logger.info('[%s] Preparing form data for Einsatzrapport', f_id)
         lodur_data = {
@@ -145,13 +155,13 @@ class Lodur:
             'dtv_d': str(date.day), # 04. Datum von
             'dtv_m': str(date.month), # 04. Datum von
             'dtv_y': str(date.year), # 04. Datum von
-            'dtb_d': str(date.day), # 04. Datum bis - we dont know yet the end date
-            'dtb_m': str(date.month), # 04. Datum bis - assume the same day
-            'dtb_y': str(date.year), # 04. Datum bis
+            'dtb_d': str(date_end.day), # 04. Datum bis
+            'dtb_m': str(date_end.month), # 04. Datum bis
+            'dtb_y': str(date_end.year), # 04. Datum bis
             'ztv_h': str(time.hour), # 05. Zeit von
             'ztv_m': str(time.minute), # 05. Zeit von
-            'ztb_h': str(time.hour + 1), # 05. Zeit bis - we dont know yet the end time
-            'ztb_m': str(time.minute), # 05. Zeit bis - just add 1 hour and correct later
+            'ztb_h': str(time_end.hour), # 05. Zeit bis - we dont know yet the end time
+            'ztb_m': str(time_end.minute), # 05. Zeit bis - just add 1 hour and correct later
             'e_ort_1': '306', # 06. Einsatzort: Urdorf 306, Birmensdorf 298
             'eins_ereig': eins_ereig, # 07. Ereignis
             'adr': adr, # 08. Adresse
@@ -280,6 +290,7 @@ class Lodur:
             # very ugly way to find the assigned event id by lodur
             # lodur adds a script element at the bottom of the returned html
             # with the location to reload the page - containing the assigned event id
+            # print(response.text)
             lodur_id = re.search('modul=36&event=([0-9].*)&edit=1&what=144', response.text).group(1)
             self.logger.info('[%s] Lodur assigned the event_id %s', lodur_data['e_r_num'], lodur_id)
 
@@ -291,7 +302,7 @@ class Lodur:
                 self.url +
                 '?modul=36&edit=1&what=144&event=' + lodur_id
             ).text
-            auto_num = re.search(r"fdata\['auto_num'\]\[2\]='(.*)';", content).group(1)
+            auto_num = re.search(r"\"([0-9]{4}\|[0-9]{1,3})\"", content).group(1)
             self.logger.info('[%s] Lodur assigned the auto_num %s', lodur_data['e_r_num'], auto_num)
 
             return lodur_id, auto_num

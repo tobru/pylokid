@@ -20,6 +20,7 @@ class EmailHandling:
 
         self.tmp_dir = tmp_dir
         try:
+            # TODO timeout
             self.imap = imaplib.IMAP4_SSL(server)
             self.imap.login(username, password)
             self.imap.select(mailbox, readonly=False)
