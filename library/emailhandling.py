@@ -7,6 +7,7 @@ import logging
 import re
 import email
 import email.parser
+import socket
 import imaplib
 
 _EMAIL_SUBJECTS = '(OR OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll" SUBJECT "Einsatzrapport" UNSEEN)'
@@ -19,6 +20,7 @@ class EmailHandling:
         self.logger.info('Connecting to IMAP server %s', server)
 
         self.tmp_dir = tmp_dir
+        socket.setdefaulttimeout(60)
         try:
             # TODO timeout
             self.imap = imaplib.IMAP4_SSL(server)
