@@ -174,7 +174,7 @@ class Lodur:
             'en_kr_feuwehr': '1', # 21. Einsatzkräfte
             'ali_io': '1', # 24. Alarmierung
             'kopie_gvz': '1', # 31. Kopie innert 10 Tagen an GVZ
-            'mannschaftd_einsa': '70', # 32. Einsatzleiter|in
+            'mannschaftd_einsa': '88', # 32. Einsatzleiter|in
         }
 
         # Submit the form
