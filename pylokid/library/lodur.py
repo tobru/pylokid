@@ -200,14 +200,14 @@ class Lodur:
 
         # Prepare the form
         self.browser.open(self.url + '?modul=36&what=828&event=' + lodur_id)
-        self.browser.select_form('#frm_alarmdepesche')
+        frm_alarmdepesche = self.browser.select_form('#frm_alarmdepesche')
 
         # Fill in form data
-        self.browser['alarmdepesche'] = open(file_path, 'rb')
+        frm_alarmdepesche.set('alarmdepesche', file_path)
 
         # Submit the form
         self.browser.submit_selected()
-        self.logger.info('[%s] File uploaded', f_id)
+        self.logger.info('[%s] File uploaded to Lodur', f_id)
 
     def einsatzrapport_scan(self, f_id, file_path, webdav_client):
         """ Prepare Einsatzrapport Scan to be sent to Lodur """
