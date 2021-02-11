@@ -11,10 +11,10 @@ from dotenv import find_dotenv, load_dotenv
 from pushover import Client
 
 # local classes
-from library.emailhandling import EmailHandling
-from library.lodur import Lodur
-from library.pdftotext import PDFParsing
-from library.webdav import WebDav
+from pylokid.library.emailhandling import EmailHandling
+from pylokid.library.lodur import Lodur
+from pylokid.library.pdftotext import PDFParsing
+from pylokid.library.webdav import WebDav
 
 # Configuration
 load_dotenv(find_dotenv())

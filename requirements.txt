@@ -1,7 +1,0 @@
-aioeasywebdav==2.4.0
-# MechanicalSoup > 0.11.0 produces "TypeError: expected string or bytes-like
-# object" on file upload
-MechanicalSoup==0.11.0
-python-dotenv==0.10.3
-requests>=2.20.0
-python-pushover==0.4
