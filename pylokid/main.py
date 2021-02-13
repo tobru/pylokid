@@ -34,7 +34,7 @@ LODUR_BASE_URL = os.getenv("LODUR_BASE_URL")
 HEARTBEAT_URL = os.getenv("HEARTBEAT_URL")
 PUSHOVER_API_TOKEN = os.getenv("PUSHOVER_API_TOKEN")
 PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY")
-PYLOKID_VERSION = "2.1.2"
+PYLOKID_VERSION = "2.2.0"
 
 def main():
     """ main """

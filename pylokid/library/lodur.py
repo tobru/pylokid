@@ -190,7 +190,7 @@ class Lodur:
     def einsatzrapport_alarmdepesche(self, f_id, file_path, webdav_client):
         """ Upload a file to Alarmdepesche """
 
-        self.logger.info('[%s] Submitting File to Lodur "Alarmdepesche"', f_id)
+        self.logger.info('[%s] Submitting file %s to Lodur "Alarmdepesche"', f_id, file_path)
 
         # Login to lodur
         self.login()
@@ -199,7 +199,7 @@ class Lodur:
         lodur_id = webdav_client.get_lodur_data(f_id)['event_id']
 
         # Prepare the form
-        self.browser.open(self.url + '?modul=36&what=828&event=' + lodur_id)
+        self.browser.open('{}?modul=36&event={}&what=828'.format(self.url,lodur_id ))
         frm_alarmdepesche = self.browser.select_form('#frm_alarmdepesche')
 
         # Fill in form data

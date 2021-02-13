@@ -1,0 +1,11 @@
+--- /usr/local/lib/python3.9/site-packages/mechanicalsoup/browser.py.orig	2021-02-13 20:16:45.799025505 +0100
++++ /usr/local/lib/python3.9/site-packages/mechanicalsoup/browser.py	    2021-02-13 15:29:10.244575346 +0100
+@@ -201,7 +201,7 @@
+                     # If value is the empty string, we still pass it
+                     # for consistency with browsers (see
+                     # https://github.com/MechanicalSoup/MechanicalSoup/issues/250).
+-                    files[name] = (filename, content)
++                    files[name] = (filename, content, 'application/pdf')
+                 else:
+                     data.append((name, value))
+ 

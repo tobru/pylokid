@@ -1,3 +1,4 @@
+## ----------- Step 1
 FROM docker.io/python:3.9 AS base
 
 # Install pdftotext
@@ -10,6 +11,7 @@ ENV HOME=/app
 
 WORKDIR ${HOME}
 
+## ----------- Step 2
 FROM base AS builder
 
 ENV PATH=${PATH}:${HOME}/.poetry/bin
@@ -30,12 +32,22 @@ COPY . ./
 
 RUN poetry build --format wheel
 
+## ----------- Step 3
 FROM builder AS installer
 
 COPY --from=builder \
       /app/dist /app/dist
 RUN pip install /app/dist/pylokid-*-py3-none-any.whl
 
+COPY hack/patches/*.patch /tmp
+
+# The ugliest possible way to workaround https://github.com/MechanicalSoup/MechanicalSoup/issues/356
+# For some unknown reasons Lodur now wants "Content-Type: application/pdf" set in the multipart
+# data section. And as I couln't figure out yet how to do that in MechanicalSoup and I only upload PDFs
+# I just patch it to hardcode it. YOLO
+RUN patch -p0 /usr/local/lib/python3.9/site-packages/mechanicalsoup/browser.py < /tmp/mechsoup-browser-content-type.patch
+
+## ----------- Step 4
 FROM base AS runtime
 
 COPY --from=installer \
