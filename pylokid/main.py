@@ -11,10 +11,10 @@ from dotenv import find_dotenv, load_dotenv
 from pushover import Client
 
 # local classes
-from library.emailhandling import EmailHandling
-from library.lodur import Lodur
-from library.pdftotext import PDFParsing
-from library.webdav import WebDav
+from pylokid.library.emailhandling import EmailHandling
+from pylokid.library.lodur import Lodur
+from pylokid.library.pdftotext import PDFParsing
+from pylokid.library.webdav import WebDav
 
 # Configuration
 load_dotenv(find_dotenv())
@@ -34,7 +34,7 @@ LODUR_BASE_URL = os.getenv("LODUR_BASE_URL")
 HEARTBEAT_URL = os.getenv("HEARTBEAT_URL")
 PUSHOVER_API_TOKEN = os.getenv("PUSHOVER_API_TOKEN")
 PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY")
-PYLOKID_VERSION = "2.1.2"
+PYLOKID_VERSION = "2.2.0"
 
 def main():
     """ main """
