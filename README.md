@@ -32,7 +32,7 @@ pylokid funktioniert so:
   "Einsatzausdruck_FW" oder "Einsatzprotokoll".
 * Wird ein passendes E-Mail gefunden, wird der Anhang (das PDF)
   heruntergeladen, in die Cloud gespeichert (WebDAV) und im Lodur
-  ein entsprechender Einsatzrapport eröffnet und vorausgefüllt.
+  der entsprechende Einsatzrapport gesucht.
   Das PDF wird sinnvoll umbenannt und als Alarmdepesche ins Lodur
   geladen.
 * Kommen weitere E-Mails mit dem Betreff "Einsatzausdruck_FW" werden
@@ -42,6 +42,7 @@ pylokid funktioniert so:
 * Wird der von Hand ausgefüllte Einsatzrapport via Scanner per E-Mail
   an das E-Mail Postfach gesendet (Betreff "Attached Image FXXXXXXXX")
   wird das PDF in der Cloud und im Lodur gespeichert.
+* Nach jedem Durchgang wird ein Heartbeat an den konfigurierten Healthcheck Service gesendet, z.B. https://healthchecks.io/
 
 Desweiteren wird über Pushover eine Nachricht mit möglichst vielen
 Informationen publiziert.
@@ -72,6 +73,38 @@ an Lodur gesendet werden, in einem JSON File im WebDAV neben den
 PDFs abgelegt. So lässt sich im Nachhinein ein Datensatz bearbeiten
 und eine Zuordnung des Einsatzes im WebDAV und in Lodur herstellen.
 
+## Detailierter Ablauf
+
+### Einsatzausdruck_FW
+
+1. PDF extrahieren und in Cloud hochladen
+2. Falls PDF noch nicht geparst wurde wird davon ausgegangen, dass dies die initiale Meldung ist:
+   1. PDF parsen
+   2. Push Nachricht mit Infos aus PDF senden
+   3. Geparste Daten als JSON in Cloud speichern
+3. Falls Einsatz im Lodur noch nicht ausgelesen:
+   1. Einsatz Datensatz ID im Lodur suchen
+   2. Ganzer Datensatz auslesen
+   3. Datensatz als JSON in Cloud speichern
+   4. PDF in Lodur speichern
+   5. E-Mail als gelesen markieren - wird somit nicht nochmals bearbeitet
+### Einsatzprotokoll
+
+1. Lodur Datensatz ID aus Cloud laden (JSON Datei)
+2. Ganzer Datensatz aus Lodur auslesen und als JSON in Cloud speichern
+3. Falls Datensatz zur Bearbeitung freigegeben ist (`aut_created_report == finished`)
+   1. PDF in Lodur speichern
+   2. Einsatzprotokoll Daten ergänzen und in Lodur speichern
+   3. Push Nachricht senden (Einsatz beendet)
+   4. E-Mail als gelesen markieren - wird somit nicht nochmals bearbeitet
+
+### Einsatzrapport
+
+1. Prüfen, ob F-Nummer aus Scan E-Mail Betreff gefunden
+2. Lodur Datensatz ID aus Cloud laden (JSON Datei)
+3. Ganzer Datensatz aus Lodur auslesen und als JSON in Cloud speichern
+4. PDF in Lodur speichern und Datensatz ergänzen
+5. Push Nachricht senden (Rapport bearbeitet)
 ## Installation and Configuration
 
 The application is written in Python and runs perfectly on Kubernetes.
