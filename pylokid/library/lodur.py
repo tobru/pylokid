@@ -69,7 +69,12 @@ class Lodur:
         if state == "open":
             self.browser.open("{}?modul=36".format(self.url))
 
-        einsatzrapport_url = self.browser.find_link(link_text=f_id)
+        try:
+            einsatzrapport_url = self.browser.find_link(link_regex=re.compile(f_id))
+        except mechanicalsoup.LinkNotFoundError:
+            self.logger.error("[%s] No Einsatzrapport found in Lodur", f_id)
+            return None
+
         if einsatzrapport_url:
             lodur_id = re.search(
                 ".*event=([0-9]{1,})&.*", einsatzrapport_url["href"]

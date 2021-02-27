@@ -247,10 +247,3 @@ def main():
         # repeat every
         logger.info("Waiting %s seconds until next check", IMAP_CHECK_INTERVAL)
         time.sleep(int(IMAP_CHECK_INTERVAL))
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("Byebye")

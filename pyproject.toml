@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pylokid"
-version = "3.0.0"
+version = "3.0.1"
 description = ""
 authors = ["Tobias Brunner <tobias@tobru.ch>"]
 license = "MIT"
