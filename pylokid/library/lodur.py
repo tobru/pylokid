@@ -127,7 +127,7 @@ class Lodur:
         else:
             return None
 
-    def einsatzprotokoll(self, f_id, lodur_data, webdav_client):
+    def einsatzprotokoll(self, f_id, lodur_data, pdf_data, webdav_client):
         """ Prepare Einsatzprotokoll to be sent to Lodur """
 
         self.logger.info("[%s] Updating Lodur entry", f_id)
@@ -138,9 +138,9 @@ class Lodur:
         lodur_data["ztb_m"] = lodur_data[
             "ztv_m"
         ]  # 05. Zeit (copy minute from start to round up to 1h)
-        lodur_data["eins_ereig"] = "{} - {} - {}".format(
-            f_id, lodur_data["ala_stich"], lodur_data["adr"]
-        )  # 07. Ereignis
+        lodur_data[
+            "eins_ereig"
+        ] = f"{f_id} - {pdf_data['einsatz']} - {lodur_data['adr']}"  # 07. Ereignis
         lodur_data["en_kr_feuwehr"] = "1"  # 21. Einsatzkräfte
         lodur_data["ali_io"] = "1"  # 24. Alarmierung
         lodur_data["keyword_els_zutreffend"] = "1"  # 25. Stichwort

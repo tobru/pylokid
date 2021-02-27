@@ -170,6 +170,7 @@ def main():
                 elif f_type == "Einsatzprotokoll":
 
                     lodur_id = webdav_client.get_lodur_data(f_id)["event_id"]
+                    pdf_data = webdav_client.get_lodur_data(f_id, "_pdf.json")
                     logger.info(
                         "[%s] Processing type %s with Lodur ID %s",
                         f_id,
@@ -195,12 +196,14 @@ def main():
                         )
 
                         # Update entry in Lodur
-                        lodur_client.einsatzprotokoll(f_id, lodur_data, webdav_client)
+                        lodur_client.einsatzprotokoll(
+                            f_id, lodur_data, pdf_data, webdav_client
+                        )
 
                         # Einsatz finished - publish on pushover
                         logger.info("[%s] Publishing message on Pushover", f_id)
                         pushover.send_message(
-                            "Einsatz {} beendet".format(f_id),
+                            "Einsatz beendet",
                             title="Feuerwehr Einsatz beendet - {}".format(f_id),
                         )
 

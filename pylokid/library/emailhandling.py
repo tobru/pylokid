@@ -60,7 +60,7 @@ class EmailHandling:
         data = {}
         for msg_id in msg_ids[0].split():
             # download message from imap
-            typ, msg_data = self.imap.fetch(msg_id, "(RFC822)")
+            typ, msg_data = self.imap.fetch(msg_id, "(BODY.PEEK[])")
 
             if typ != "OK":
                 self.logger.error("Error fetching message")
