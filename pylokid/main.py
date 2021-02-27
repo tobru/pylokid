@@ -5,6 +5,7 @@
 import logging
 import os
 import time
+import signal
 
 import requests
 from importlib.metadata import version
@@ -37,6 +38,20 @@ PUSHOVER_API_TOKEN = os.getenv("PUSHOVER_API_TOKEN")
 PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY")
 
 
+class GracefulKiller:
+    kill_now = False
+    signals = {signal.SIGINT: "SIGINT", signal.SIGTERM: "SIGTERM"}
+
+    def __init__(self, logger):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+        self.logger = logger
+
+    def exit_gracefully(self, signum, frame):
+        self.logger.info("Received signal %s", self.signals[signum])
+        self.kill_now = True
+
+
 def main():
     """ main """
 
@@ -47,6 +62,8 @@ def main():
     )
     logger = logging.getLogger("pylokid")
     logger.info("Starting pylokid version %s", version("pylokid"))
+
+    killer = GracefulKiller(logger)
 
     # Initialize IMAP Session
     imap_client = EmailHandling(
@@ -244,6 +261,11 @@ def main():
 
         # send heartbeat
         requests.get(HEARTBEAT_URL)
-        # repeat every
-        logger.info("Waiting %s seconds until next check", IMAP_CHECK_INTERVAL)
-        time.sleep(int(IMAP_CHECK_INTERVAL))
+
+        while not killer.kill_now:
+            # repeat every
+            logger.info("Waiting %s seconds until next check", IMAP_CHECK_INTERVAL)
+            time.sleep(int(IMAP_CHECK_INTERVAL))
+
+        logger.info("Pylokid waves bye bye")
+        exit()
