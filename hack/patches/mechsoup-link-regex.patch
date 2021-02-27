@@ -1,0 +1,21 @@
+--- /home/tobru/.cache/pypoetry/virtualenvs/pylokid-JpqZeVMm-py3.9/lib/python3.9/site-packages/mechanicalsoup/stateful_browser.py.orig	2021-02-27 14:21:53.979582533 +0100
++++ /home/tobru/.cache/pypoetry/virtualenvs/pylokid-JpqZeVMm-py3.9/lib/python3.9/site-packages/mechanicalsoup/stateful_browser.py	2021-02-27 14:23:17.680374365 +0100
+@@ -259,7 +259,7 @@
+         for link in self.links(*args, **kwargs):
+             print("    ", link)
+ 
+-    def links(self, url_regex=None, link_text=None, *args, **kwargs):
++    def links(self, url_regex=None, link_text=None, link_regex=None, *args, **kwargs):
+         """Return links in the page, as a list of bs4.element.Tag objects.
+ 
+         To return links matching specific criteria, specify ``url_regex``
+@@ -276,6 +276,9 @@
+         if link_text is not None:
+             all_links = [a for a in all_links
+                          if a.text == link_text]
++        if link_regex is not None:
++            all_links = [a for a in all_links
++                         if re.search(link_regex, a.text)]
+         return all_links
+ 
+     def find_link(self, *args, **kwargs):
