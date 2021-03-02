@@ -1,4 +1,5 @@
 __pycache__/
 .vscode/
 .env
+pylokid/temp_test.py
 test.py

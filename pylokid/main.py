@@ -43,7 +43,7 @@ def main():
     # Logging configuration
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        format="%(asctime)s - %(levelname)s - %(message)s",
     )
     logger = logging.getLogger("pylokid")
     logger.info("Starting pylokid version %s", version("pylokid"))
@@ -80,170 +80,172 @@ def main():
     pdf = PDFParsing()
 
     # Main Loop
+    logger.info("** Starting to process E-Mails **")
     while True:
-        attachments = {}
-        num_messages, msg_ids = imap_client.search_emails()
-        if num_messages:
-            attachments = imap_client.store_attachments(msg_ids)
 
-        if attachments:
-            for subject in attachments:
-                f_type, f_id = imap_client.parse_subject(subject)
-                file_name = attachments[subject]
+        # Search for matchting E-Mails
+        msg_ids = imap_client.search_emails()
 
-                # Upload file to cloud
-                webdav_client.upload(file_name, f_id)
+        for msg, subject in msg_ids.items():
+            logger.info("Processing IMAP message ID %s", msg)
+            file_name = imap_client.store_attachment(msg)
 
-                # Take actions - depending on the type
-                if f_type == "Einsatzausdruck_FW":
-                    logger.info("[%s] Processing type %s", f_id, f_type)
+            # If the message couldn't be parsed, skip to next message
+            if not file_name:
+                pass
 
-                    # Check if the PDF isn't already parsed
-                    if webdav_client.get_lodur_data(f_id, "_pdf.json"):
-                        logger.info("[%s] PDF already parsed", f_id)
-                    else:
-                        # Extract information from PDF
-                        pdf_data = pdf.extract_einsatzausdruck(
-                            os.path.join(TMP_DIR, file_name),
-                            f_id,
-                        )
+            # Figure out event type and F ID by parsing the subject
+            f_type, f_id = imap_client.parse_subject(subject)
 
-                        # publish Einsatz on Pushover
-                        logger.info("[%s] Publishing message on Pushover", f_id)
-                        pushover.send_message(
-                            "<b>{}</b>\n\n* Ort: {}\n* Melder: {}\n* Hinweis: {}\n* {}\n\n{}\n\n{}".format(
-                                pdf_data["einsatz"],
-                                pdf_data["ort"],
-                                pdf_data["melder"].replace("\n", " "),
-                                pdf_data["hinweis"],
-                                pdf_data["sondersignal"],
-                                pdf_data["bemerkungen"],
-                                pdf_data["disponierteeinheiten"],
-                            ),
-                            title="Feuerwehr Einsatz - {}".format(f_id),
-                            url="https://www.google.com/maps/search/?api=1&query={}".format(
-                                pdf_data["ort"]
-                            ),
-                            url_title="Ort auf Karte suchen",
-                            html=1,
-                        )
+            # Upload extracted attachment to cloud
+            webdav_client.upload(file_name, f_id)
 
-                        # Upload extracted data to cloud
-                        webdav_client.store_data(f_id, f_id + "_pdf.json", pdf_data)
+            # Take actions - depending on the type
+            if f_type == "Einsatzausdruck_FW":
+                logger.info("[%s] Processing type %s", f_id, f_type)
 
-                    if webdav_client.get_lodur_data(f_id):
-                        logger.info("[%s] Lodur data already retrieved", f_id)
-                    else:
-                        # Retrieve data from Lodur
-                        lodur_id = lodur_client.get_einsatzrapport_id(f_id)
-                        if lodur_id:
-                            logger.info(
-                                "[%s] Einsatzrapport available in Lodur with ID %s",
-                                f_id,
-                                lodur_id,
-                            )
-                            logger.info(
-                                "%s?modul=36&what=144&event=%s&edit=1",
-                                LODUR_BASE_URL,
-                                lodur_id,
-                            )
-
-                            lodur_data = lodur_client.retrieve_form_data(lodur_id)
-                            webdav_client.store_data(
-                                f_id, f_id + "_lodur.json", lodur_data
-                            )
-
-                            # upload Alarmdepesche PDF to Lodur
-                            lodur_client.upload_alarmdepesche(
-                                f_id,
-                                os.path.join(TMP_DIR, file_name),
-                                webdav_client,
-                            )
-
-                            # Marking message as seen, no need to reprocess again
-                            for msg_id in msg_ids:
-                                logger.info("[%s] Marking E-Mail message as seen", f_id)
-                                imap_client.mark_seen(msg_id)
-                        else:
-                            logger.warn("[%s] Einsatzrapport NOT found in Lodur", f_id)
-
-                elif f_type == "Einsatzprotokoll":
-
-                    lodur_id = webdav_client.get_lodur_data(f_id)["event_id"]
-                    pdf_data = webdav_client.get_lodur_data(f_id, "_pdf.json")
-                    logger.info(
-                        "[%s] Processing type %s with Lodur ID %s",
+                # Check if the PDF isn't already parsed
+                if webdav_client.get_lodur_data(f_id, "_pdf.json"):
+                    logger.info("[%s] PDF already parsed", f_id)
+                else:
+                    # Extract information from PDF
+                    pdf_data = pdf.extract_einsatzausdruck(
+                        os.path.join(TMP_DIR, file_name),
                         f_id,
-                        f_type,
-                        lodur_id,
                     )
 
-                    # Retrieve Lodur data again and store it in Webdav
-                    lodur_data = lodur_client.retrieve_form_data(lodur_id)
-                    webdav_client.store_data(f_id, f_id + "_lodur.json", lodur_data)
+                    # publish Einsatz on Pushover
+                    logger.info("[%s] Publishing message on Pushover", f_id)
+                    pushover.send_message(
+                        "<b>{}</b>\n\n* Ort: {}\n* Melder: {}\n* Hinweis: {}\n* {}\n\n{}\n\n{}".format(
+                            pdf_data["einsatz"],
+                            pdf_data["ort"],
+                            pdf_data["melder"].replace("\n", " "),
+                            pdf_data["hinweis"],
+                            pdf_data["sondersignal"],
+                            pdf_data["bemerkungen"],
+                            pdf_data["disponierteeinheiten"],
+                        ),
+                        title="Feuerwehr Einsatz - {}".format(f_id),
+                        url="https://www.google.com/maps/search/?api=1&query={}".format(
+                            pdf_data["ort"]
+                        ),
+                        url_title="Ort auf Karte suchen",
+                        html=1,
+                    )
 
-                    if (
-                        "aut_created_report" in lodur_data
-                        and lodur_data["aut_created_report"] == "finished"
-                    ):
-                        logger.info("[%s] Record in Lodur ready to be updated", f_id)
+                    # Upload extracted data to cloud
+                    webdav_client.store_data(f_id, f_id + "_pdf.json", pdf_data)
 
-                        # Upload Einsatzprotokoll to Lodur
+                if webdav_client.get_lodur_data(f_id):
+                    logger.info("[%s] Lodur data already retrieved", f_id)
+                    # Marking message as seen, no need to reprocess again
+                    imap_client.mark_seen(msg, f_id)
+                else:
+                    # Retrieve data from Lodur
+                    lodur_id = lodur_client.get_einsatzrapport_id(f_id)
+                    if lodur_id:
+                        logger.info(
+                            "[%s] Einsatzrapport available in Lodur with ID %s",
+                            f_id,
+                            lodur_id,
+                        )
+                        logger.info(
+                            "%s?modul=36&what=144&event=%s&edit=1",
+                            LODUR_BASE_URL,
+                            lodur_id,
+                        )
+
+                        lodur_data = lodur_client.retrieve_form_data(lodur_id)
+                        webdav_client.store_data(f_id, f_id + "_lodur.json", lodur_data)
+
+                        # upload Alarmdepesche PDF to Lodur
                         lodur_client.upload_alarmdepesche(
                             f_id,
                             os.path.join(TMP_DIR, file_name),
                             webdav_client,
                         )
 
-                        # Update entry in Lodur
-                        lodur_client.einsatzprotokoll(
-                            f_id, lodur_data, pdf_data, webdav_client
-                        )
-
-                        # Einsatz finished - publish on pushover
-                        logger.info("[%s] Publishing message on Pushover", f_id)
-                        pushover.send_message(
-                            "Einsatz beendet",
-                            title="Feuerwehr Einsatz beendet - {}".format(f_id),
-                        )
-
                         # Marking message as seen, no need to reprocess again
-                        for msg_id in msg_ids:
-                            logger.info("[%s] Marking E-Mail message as seen", f_id)
-                            imap_client.mark_seen(msg_id)
-
+                        imap_client.mark_seen(msg, f_id)
                     else:
-                        logger.warn(
-                            "[%s] Record in Lodur NOT ready yet to be updated", f_id
-                        )
+                        logger.warn("[%s] Einsatzrapport NOT found in Lodur", f_id)
 
-                # This is usually a scan from the Depot printer
-                elif f_type == "Einsatzrapport":
+            elif f_type == "Einsatzprotokoll":
 
-                    logger.info("[%s] Processing type %s", f_id, f_type)
+                lodur_id = webdav_client.get_lodur_data(f_id)["event_id"]
+                pdf_data = webdav_client.get_lodur_data(f_id, "_pdf.json")
+                logger.info(
+                    "[%s] Processing type %s with Lodur ID %s",
+                    f_id,
+                    f_type,
+                    lodur_id,
+                )
 
-                    # Attach scan in Lodur if f_id is available
-                    # f_id can be empty when scan was misconfigured
-                    if f_id != None:
-                        lodur_id = webdav_client.get_lodur_data(f_id)["event_id"]
-                        # Retrieve Lodur data again and store it in Webdav
-                        lodur_data = lodur_client.retrieve_form_data(lodur_id)
-                        webdav_client.store_data(f_id, f_id + "_lodur.json", lodur_data)
-                        lodur_client.einsatzrapport_scan(
-                            f_id,
-                            lodur_data,
-                            os.path.join(TMP_DIR, file_name),
-                            webdav_client,
-                        )
+                # Retrieve Lodur data again and store it in Webdav
+                lodur_data = lodur_client.retrieve_form_data(lodur_id)
+                webdav_client.store_data(f_id, f_id + "_lodur.json", lodur_data)
 
-                    logger.info("[%s] Publishing message on Pushover", f_id)
+                if (
+                    "aut_created_report" in lodur_data
+                    and lodur_data["aut_created_report"] == "finished"
+                ):
+                    logger.info("[%s] Record in Lodur ready to be updated", f_id)
 
-                    pushover.send_message(
-                        "Scan {} wurde bearbeitet und in Cloud geladen".format(f_id),
-                        title="Feuerwehr Scan bearbeitet - {}".format(f_id),
+                    # Upload Einsatzprotokoll to Lodur
+                    lodur_client.upload_alarmdepesche(
+                        f_id,
+                        os.path.join(TMP_DIR, file_name),
+                        webdav_client,
                     )
+
+                    # Update entry in Lodur
+                    lodur_client.einsatzprotokoll(
+                        f_id, lodur_data, pdf_data, webdav_client
+                    )
+
+                    # Einsatz finished - publish on pushover
+                    logger.info("[%s] Publishing message on Pushover", f_id)
+                    pushover.send_message(
+                        "Einsatz beendet",
+                        title="Feuerwehr Einsatz beendet - {}".format(f_id),
+                    )
+
+                    # Marking message as seen, no need to reprocess again
+                    imap_client.mark_seen(msg, f_id)
+
                 else:
-                    logger.error("[%s] Unknown type: %s", f_id, f_type)
+                    logger.warn(
+                        "[%s] Record in Lodur NOT ready yet to be updated", f_id
+                    )
+
+            # This is usually a scan from the Depot printer
+            elif f_type == "Einsatzrapport":
+
+                logger.info("[%s] Processing type %s", f_id, f_type)
+
+                # Attach scan in Lodur if f_id is available
+                # f_id can be empty when scan was misconfigured
+                if f_id != None:
+                    lodur_id = webdav_client.get_lodur_data(f_id)["event_id"]
+                    # Retrieve Lodur data again and store it in Webdav
+                    lodur_data = lodur_client.retrieve_form_data(lodur_id)
+                    webdav_client.store_data(f_id, f_id + "_lodur.json", lodur_data)
+                    lodur_client.einsatzrapport_scan(
+                        f_id,
+                        lodur_data,
+                        os.path.join(TMP_DIR, file_name),
+                        webdav_client,
+                    )
+
+                logger.info("[%s] Publishing message on Pushover", f_id)
+
+                pushover.send_message(
+                    "Scan {} wurde bearbeitet und in Cloud geladen".format(f_id),
+                    title="Feuerwehr Scan bearbeitet - {}".format(f_id),
+                )
+            else:
+                logger.error("[%s] Unknown type: %s", f_id, f_type)
 
         # send heartbeat
         requests.get(HEARTBEAT_URL)
