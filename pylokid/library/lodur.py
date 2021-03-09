@@ -192,7 +192,7 @@ class Lodur:
         self.submit_form_einsatzrapport(lodur_data)
 
         # Upload scan to Alarmdepesche
-        self.einsatzrapport_alarmdepesche(
+        self.upload_alarmdepesche(
             f_id,
             file_path,
             webdav_client,
