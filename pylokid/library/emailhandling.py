@@ -77,7 +77,7 @@ class EmailHandling:
                 temp.append(val)
                 msg_id_subject_deduplicated[key] = val
                 self.logger.info(
-                    "Adding Message ID %s '%s' to list to process", msg_id, subject
+                    "Adding Message ID %s '%s' to list to process", key, val
                 )
             else:
                 self.mark_seen(key, key)

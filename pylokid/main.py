@@ -244,6 +244,10 @@ def main():
                     "Scan {} wurde bearbeitet und in Cloud geladen".format(f_id),
                     title="Feuerwehr Scan bearbeitet - {}".format(f_id),
                 )
+
+                # Marking message as seen, no need to reprocess again
+                imap_client.mark_seen(msg, f_id)
+
             else:
                 logger.error("[%s] Unknown type: %s", f_id, f_type)
 
