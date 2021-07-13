@@ -233,7 +233,7 @@ def main():
 
                 # Attach scan in Lodur if f_id is available
                 # f_id can be empty when scan was misconfigured
-                if f_id != None or len(f_id) < 8:
+                if f_id != None and len(f_id) > 8:
                     lodur_id = webdav_client.get_lodur_data(f_id)["event_id"]
                     # Retrieve Lodur data again and store it in Webdav
                     lodur_data = lodur_client.retrieve_form_data(lodur_id)
