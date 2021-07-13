@@ -204,6 +204,13 @@ def main():
                         f_id, lodur_data, pdf_data, webdav_client
                     )
 
+                    # Correct time on AdF to round up to one hour
+                    # curl 'https://lodur-zh.ch/urdorf/tunnel.php?modul=36&what=1082'
+                    # -H 'Referer: https://lodur-zh.ch/urdorf/index.php?modul=36&what=145&event=3485&edit=1'
+                    # -H 'Cookie: PHPSESSID=85pnahp3q83apv7qsbi8hrj5g7'
+                    # --data-raw 'dtv_d=03&dtv_m=04&dtv_y=2021&dtb_d=03&dtb_m=04&dtb_y=2021&ztv_h=18&ztv_m=26&ztb_h=19&ztb_m=26'
+                    # ztb_m -> same as ztv_m
+
                     # Einsatz finished - publish on pushover
                     logger.info("[%s] Publishing message on Pushover", f_id)
                     pushover.send_message(
@@ -226,7 +233,7 @@ def main():
 
                 # Attach scan in Lodur if f_id is available
                 # f_id can be empty when scan was misconfigured
-                if f_id != None:
+                if f_id != None or len(f_id) < 8:
                     lodur_id = webdav_client.get_lodur_data(f_id)["event_id"]
                     # Retrieve Lodur data again and store it in Webdav
                     lodur_data = lodur_client.retrieve_form_data(lodur_id)
