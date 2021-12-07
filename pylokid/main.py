@@ -260,7 +260,38 @@ def main():
             else:
                 logger.error("[%s] Unknown type: %s", f_id, f_type)
 
-        # TODO check webdav for Einsatzrapport PDF with f_id in filename and then process it
+        logger.info("Checking WebDav Inbox folder for Einsatzrapporte to process")
+        rapporte_to_process = webdav_client.einsatzrapport_inbox_check(TMP_DIR)
+
+        if rapporte_to_process:
+            for f_id_rapport in rapporte_to_process:
+                filename = f"Einsatzrapport_{f_id_rapport}.pdf"
+                local_file = os.path.join(TMP_DIR, filename)
+                # Upload to f_id folder
+                webdav_client.upload(filename, f_id_rapport)
+
+                # Process it for Lodur
+                lodur_id = webdav_client.get_lodur_data(f_id_rapport)["event_id"]
+                # Retrieve Lodur data again and store it in Webdav
+                lodur_data = lodur_client.retrieve_form_data(lodur_id)
+                webdav_client.store_data(
+                    f_id_rapport, f_id_rapport + "_lodur.json", lodur_data
+                )
+                lodur_client.einsatzrapport_scan(
+                    f_id_rapport,
+                    lodur_data,
+                    local_file,
+                    webdav_client,
+                )
+                # Delete processed Einsatzrapport from Inbox and local temp dir
+                logger.info("Einsatzrapport processed - deleting file in Inbox")
+                webdav_client.delete(f"{WEBDAV_BASEDIR}/Inbox/{filename}")
+                os.remove(local_file)
+
+                pushover.send_message(
+                    f"Einsatzrapport {f_id_rapport} wurde bearbeitet.",
+                    title=f"Feuerwehr Einsatzrapport bearbeitet - {f_id_rapport}",
+                )
 
         # send heartbeat
         requests.get(HEARTBEAT_URL)

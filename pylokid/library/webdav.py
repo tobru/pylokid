@@ -4,6 +4,7 @@
 
 import os
 import json
+import re
 from datetime import datetime
 import logging
 import asyncio
@@ -11,7 +12,7 @@ import aioeasywebdav
 
 
 class WebDav:
-    """ WebDav Client """
+    """WebDav Client"""
 
     def __init__(self, url, username, password, webdav_basedir, tmp_dir):
         self.logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class WebDav:
         self.logger.info("WebDAV connection successfull")
 
     def upload(self, file_name, f_id, check_exists=True):
-        """ uploads a file to webdav - checks for existence before doing so """
+        """uploads a file to webdav - checks for existence before doing so"""
 
         # upload with webdav
         if f_id == None:
@@ -63,8 +64,12 @@ class WebDav:
             )
             self.logger.info('[%s] File "%s" uploaded', f_id, file_name)
 
+    def delete(self, file_name):
+        """delete file on webdav"""
+        self.loop.run_until_complete(self.webdav.delete(file_name))
+
     def einsatz_exists(self, f_id):
-        """ check if an einsatz is already created """
+        """check if an einsatz is already created"""
 
         remote_upload_dir = (
             self.webdav_basedir + "/" + str(datetime.now().year) + "/" + f_id
@@ -75,8 +80,33 @@ class WebDav:
         else:
             return False
 
+    def einsatzrapport_inbox_check(self, tmp_dir):
+        """check if an einsatzrapport with an f_id exists in the WebDav Inbox and process it"""
+
+        rapporte_to_process = []
+
+        filelist = self.loop.run_until_complete(
+            self.webdav.ls(f"{self.webdav_basedir}/Inbox")
+        )
+        for file in filelist:
+            full_path = file[0]
+            parsed = re.search(".*Einsatzrapport_(F[0-9].*)\.pdf", full_path)
+            if parsed:
+                f_id = parsed.group(1)
+                self.logger.info("[%s] Found %s - Downloading", f_id, full_path)
+
+                # Download PDF for later processing
+                self.loop.run_until_complete(
+                    self.webdav.download(
+                        full_path, f"{tmp_dir}/Einsatzrapport_{f_id}.pdf"
+                    )
+                )
+                rapporte_to_process.append(f_id)
+
+        return rapporte_to_process
+
     def store_data(self, f_id, file_name, data):
-        """ stores data on webdav """
+        """stores data on webdav"""
 
         file_path = os.path.join(self.tmp_dir, file_name)
 
@@ -88,7 +118,7 @@ class WebDav:
         self.upload(file_name, f_id, False)
 
     def get_lodur_data(self, f_id, filetype="_lodur.json"):
-        """ gets lodur data if it exists """
+        """gets lodur data if it exists"""
 
         file_name = f_id + filetype
         file_path = os.path.join(self.tmp_dir, file_name)

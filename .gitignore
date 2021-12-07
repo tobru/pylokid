@@ -3,3 +3,4 @@ __pycache__/
 .env
 pylokid/temp_test.py
 test.py
+tmp/
