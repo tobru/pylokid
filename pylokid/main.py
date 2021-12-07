@@ -38,7 +38,7 @@ PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY")
 
 
 def main():
-    """ main """
+    """main"""
 
     # Logging configuration
     logging.basicConfig(
@@ -244,6 +244,8 @@ def main():
                         os.path.join(TMP_DIR, file_name),
                         webdav_client,
                     )
+                else:
+                    f_id = f_type
 
                 logger.info("[%s] Publishing message on Pushover", f_id)
 
@@ -257,6 +259,8 @@ def main():
 
             else:
                 logger.error("[%s] Unknown type: %s", f_id, f_type)
+
+        # TODO check webdav for Einsatzrapport PDF with f_id in filename and then process it
 
         # send heartbeat
         requests.get(HEARTBEAT_URL)
