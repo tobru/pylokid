@@ -14,7 +14,7 @@ _EMAIL_SUBJECTS = '(OR OR SUBJECT "Einsatzausdruck_FW" SUBJECT "Einsatzprotokoll
 
 
 class EmailHandling:
-    """ Email handling """
+    """Email handling"""
 
     def __init__(self, server, username, password, mailbox, tmp_dir):
         self.logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class EmailHandling:
         self.logger.info("IMAP connection successful")
 
     def search_emails(self):
-        """ searches for emails matching the configured subject """
+        """searches for emails matching the configured subject"""
 
         msg_ids = []
 
@@ -63,10 +63,13 @@ class EmailHandling:
                 self.logger.error("Error fetching subject")
                 msg_id_subject[msg_id] = "unknown"
             else:
-                mail = email.message_from_string(str(msg_data[0][1], "utf-8"))
-                subject = mail["subject"]
-                self.logger.info("Message ID %s has subject '%s'", msg_id, subject)
-                msg_id_subject[msg_id] = subject
+                try:
+                    mail = email.message_from_string(str(msg_data[0][1], "utf-8"))
+                    subject = mail["subject"]
+                    self.logger.info("Message ID %s has subject '%s'", msg_id, subject)
+                    msg_id_subject[msg_id] = subject
+                except TypeError:
+                    self.logger.error("Could not decode mail - %s", msg_data[0][1])
 
         # Deduplicate messages - usually the same message arrives multiple times
         self.logger.info("Deduplicating messages")
@@ -85,7 +88,7 @@ class EmailHandling:
         return msg_id_subject_deduplicated
 
     def store_attachment(self, msg_id):
-        """ stores the attachment to filesystem """
+        """stores the attachment to filesystem"""
 
         # download message from imap
         typ, msg_data = self.imap.fetch(msg_id, "(BODY.PEEK[])")
@@ -132,7 +135,7 @@ class EmailHandling:
         self.imap.store(msg_id, "+FLAGS", "(\\Seen)")
 
     def parse_subject(self, subject):
-        """ extract f id and type from subject """
+        """extract f id and type from subject"""
 
         # This regex matches the subjects filtered already in IMAP search
         parsed = re.search("([a-zA-Z_]*):? ?(F[0-9].*)?", subject)
